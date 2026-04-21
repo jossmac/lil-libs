@@ -1,0 +1,20 @@
+# Prevent searching for .editorconfig files in parent directories
+root = true
+
+# Default rules
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# JavaScript and TypeScript overrides
+[*.{js,ts}]
+quote_type = single
+
+# Markdown files often use 4 spaces for lists
+[*.md]
+indent_size = 4
+trim_trailing_whitespace = false

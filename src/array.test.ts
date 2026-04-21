@@ -1,0 +1,143 @@
+import { describe, expect, expectTypeOf, it } from "vitest";
+
+import {
+  chunk,
+  createStableKeySelector,
+  isIterable,
+  isLength,
+  isNonEmpty,
+  toArray,
+} from "./array";
+
+describe("lil-libs/array", () => {
+  describe("chunk", () => {
+    it("splits an array into chunks of the given size (evenly divisible)", () => {
+      expect(chunk([1, 2, 3, 4], 2)).toEqual([
+        [1, 2],
+        [3, 4],
+      ]);
+      expect(chunk([1, 2, 3, 4, 5, 6], 3)).toEqual([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+    });
+    it("puts the remainder in the last chunk when not evenly divisible", () => {
+      expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+      expect(chunk([1, 2, 3, 4, 5], 3)).toEqual([
+        [1, 2, 3],
+        [4, 5],
+      ]);
+    });
+    it("returns a single chunk when size is larger than the array", () => {
+      expect(chunk([1, 2, 3], 10)).toEqual([[1, 2, 3]]);
+    });
+    it("returns an empty array when given an empty array", () => {
+      expect(chunk([], 2)).toEqual([]);
+    });
+    it("returns the correct type", () => {
+      expectTypeOf(chunk([1, 2, 3], 2)).toEqualTypeOf<number[][]>();
+      expectTypeOf(chunk(["a", "b", "c"], 2)).toEqualTypeOf<string[][]>();
+    });
+  });
+
+  describe("isLength", () => {
+    it("returns true for arrays matching the specified length", () => {
+      expect(isLength([1, 2, 3], 3)).toBe(true);
+      expect(isLength(["a", "b", "c"], 3)).toBe(true);
+    });
+    it("returns false for arrays not matching the specified length", () => {
+      expect(isLength([1, 2, 3], 4)).toBe(false);
+      expect(isLength(["a", "b", "c"], 4)).toBe(false);
+    });
+    it("narrows the type of the array to a tuple of the given length", () => {
+      const numbers = [1, 2, 3];
+      if (isLength(numbers, 3)) {
+        expectTypeOf(numbers).toEqualTypeOf<[number, number, number]>();
+      }
+    });
+  });
+
+  describe("isNonEmpty", () => {
+    it("returns true for non-empty arrays", () => {
+      expect(isNonEmpty([1])).toBe(true);
+      expect(isNonEmpty([1, 2, 3])).toBe(true);
+      expect(isNonEmpty(["a", "b"])).toBe(true);
+    });
+    it("returns false for empty arrays", () => {
+      expect(isNonEmpty([])).toBe(false);
+    });
+    it("narrows the type of the array", () => {
+      const maybeEmpty = [1, 2, 3];
+      if (isNonEmpty(maybeEmpty)) {
+        expectTypeOf(maybeEmpty).toEqualTypeOf<[number, ...number[]]>();
+      }
+    });
+  });
+
+  describe("createStableKeySelector", () => {
+    const colors = ["red", "green", "blue"] as const;
+    const getColor = createStableKeySelector(colors);
+
+    it("returns a stable item from the array, for the given string", () => {
+      // check twice for stability
+      Array.from({ length: 2 }).forEach(() => {
+        expect(getColor("Albert")).toBe("blue");
+        expect(getColor("Barbara")).toBe("green");
+        expect(getColor("Charlie")).toBe("red");
+        expect(getColor("David")).toBe("blue");
+        expect(getColor("Evan")).toBe("green");
+        expect(getColor("Frank")).toBe("red");
+      });
+    });
+    it("handles empty strings", () => {
+      expect(getColor("")).toBe("red");
+    });
+    it("returns a signature that adheres to the type of the provided array", () => {
+      expectTypeOf(getColor("Albert")).toEqualTypeOf<
+        "red" | "green" | "blue"
+      >();
+    });
+    it("throws an error if the array is empty", () => {
+      expect(() => createStableKeySelector([])).toThrow(
+        "Requires at least one key.",
+      );
+    });
+  });
+
+  describe("toArray", () => {
+    it("returns an empty array for nullish values", () => {
+      expect(toArray(null)).toEqual([]);
+      expect(toArray(undefined)).toEqual([]);
+    });
+
+    it("returns the same array instance for arrays", () => {
+      const items = [1, 2, 3];
+      expect(toArray(items)).toBe(items);
+    });
+
+    it("converts iterable values using Array.from", () => {
+      expect(toArray(new Set([1, 2, 3]))).toEqual([1, 2, 3]);
+      expect(toArray("abc")).toEqual(["abc"]);
+    });
+
+    it("wraps non-iterable values", () => {
+      const value = { hello: "world" };
+      expect(toArray(value)).toEqual([value]);
+    });
+  });
+
+  describe("isIterable", () => {
+    it("returns true for iterable objects", () => {
+      expect(isIterable(new Set([1]))).toBe(true);
+      expect(isIterable(new Map([["a", 1]]))).toBe(true);
+    });
+
+    it("returns false for non-iterables", () => {
+      expect(isIterable(null)).toBe(false);
+      expect(isIterable(undefined)).toBe(false);
+      expect(isIterable(123)).toBe(false);
+      expect(isIterable({})).toBe(false);
+      expect(isIterable({ [Symbol.iterator]: 123 })).toBe(false);
+    });
+  });
+});
