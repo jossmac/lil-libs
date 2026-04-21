@@ -1,4 +1,4 @@
-import { isNonEmpty } from "./array";
+import { isPopulatedArray } from "./array";
 
 /**
  * Check if the given value is a _genuine_ JavaScript number.
@@ -99,7 +99,7 @@ export function findNearest(
   items: number[],
   bias: "first" | "last" | "smaller" | "larger" = "first",
 ): number {
-  if (!isNonEmpty(items)) {
+  if (!isPopulatedArray(items)) {
     throw new Error("Items must not be empty.");
   }
 

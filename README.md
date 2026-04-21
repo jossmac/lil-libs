@@ -6,14 +6,14 @@ A small collection of TypeScript-first utilities for everyday application code. 
 
 ### Array
 
-#### `isNonEmpty`
+#### `isPopulatedArray`
 
 Type guard for narrowing an array to a non-empty tuple-like type.
 
 ```ts
 const values: number[] = [1, 2, 3];
 
-if (isNonEmpty(values)) {
+if (isPopulatedArray(values)) {
   // values: [number, ...number[]]
 }
 ```

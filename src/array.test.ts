@@ -5,7 +5,7 @@ import {
   createStableKeySelector,
   isIterable,
   isLength,
-  isNonEmpty,
+  isPopulatedArray,
   partition,
   toArray,
 } from "./array";
@@ -100,18 +100,22 @@ describe("lil-libs/array", () => {
     });
   });
 
-  describe("isNonEmpty", () => {
+  describe("isPopulatedArray", () => {
+    it("returns false for nullish values", () => {
+      expect(isPopulatedArray(null)).toBe(false);
+      expect(isPopulatedArray(undefined)).toBe(false);
+    });
     it("returns true for non-empty arrays", () => {
-      expect(isNonEmpty([1])).toBe(true);
-      expect(isNonEmpty([1, 2, 3])).toBe(true);
-      expect(isNonEmpty(["a", "b"])).toBe(true);
+      expect(isPopulatedArray([1])).toBe(true);
+      expect(isPopulatedArray([1, 2, 3])).toBe(true);
+      expect(isPopulatedArray(["a", "b"])).toBe(true);
     });
     it("returns false for empty arrays", () => {
-      expect(isNonEmpty([])).toBe(false);
+      expect(isPopulatedArray([])).toBe(false);
     });
     it("narrows the type of the array", () => {
       const maybeEmpty = [1, 2, 3];
-      if (isNonEmpty(maybeEmpty)) {
+      if (isPopulatedArray(maybeEmpty)) {
         expectTypeOf(maybeEmpty).toEqualTypeOf<[number, ...number[]]>();
       }
     });

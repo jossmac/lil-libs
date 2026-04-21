@@ -1,11 +1,13 @@
 import { assert } from "./assert";
-import type { TupleOf } from "./types";
+import type { Maybe, TupleOf } from "./types";
 
 /**
  * Checks if an array is non-empty.
  */
-export function isNonEmpty<T>(items: T[] | readonly T[]): items is [T, ...T[]] {
-  return items.length > 0;
+export function isPopulatedArray<T>(
+  items: Maybe<T[] | readonly T[]>,
+): items is [T, ...T[]] {
+  return items != null && items.length > 0;
 }
 
 /**
@@ -128,7 +130,7 @@ export function partition<T>(
 export function createStableKeySelector<const T extends readonly string[]>(
   keys: T,
 ) {
-  assert(isNonEmpty(keys), "Requires at least one key.");
+  assert(isPopulatedArray(keys), "Requires at least one key.");
 
   return function selectKeyFromStableHash(value: string): T[number] {
     let hash = 0;
@@ -138,7 +140,7 @@ export function createStableKeySelector<const T extends readonly string[]>(
       hash = value.charCodeAt(i) + ((hash << 5) - hash);
     }
     const index = Math.abs(hash) % keys.length;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- keys length is guaranteed to be > 0 (isNonEmpty assertion)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- keys length is guaranteed to be > 0 (isPopulatedArray assertion)
     return keys[index]!;
   };
 }
