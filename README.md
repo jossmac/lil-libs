@@ -1,46 +1,6 @@
 # lil-libs
 
-Small, focused TypeScript utility libraries for common app-level tasks.
-
-## Features
-
-- Strict TypeScript-first utilities with type guards and helper types
-- Small modules grouped by domain (array, number, object, string, etc.)
-- Test coverage via Vitest
-- No runtime dependencies
-
-## Install
-
-- Node.js `24` (active LTS)
-- pnpm `10.33.0` (managed via Corepack or installed globally)
-
-```bash
-nvm use
-pnpm install
-```
-
-## Scripts
-
-```bash
-pnpm check          # run all static checks
-pnpm check:types
-pnpm check:lint
-pnpm check:format
-
-pnpm test           # run tests once
-pnpm test:watch     # watch mode
-pnpm test:coverage  # run tests with v8 coverage
-```
-
-## Usage
-
-There is no barrel export file, import from each module directly.
-
-```ts
-import { chunk, isNonEmpty } from "@jossmac/lil-libs/array";
-import { clamp, sequence } from "@jossmac/lil-libs/number";
-import { contains, pluralize } from "@jossmac/lil-libs/string";
-```
+Small, focused TypeScript utility libraries for common app-level tasks. Zero runtime dependencies.
 
 ## API Overview
 
@@ -338,7 +298,7 @@ resolveMaybeFn((x: number) => x * 2, 21); // 42
 
 #### `lazy`
 
-Returns a lazily computed value that is cached after first access.
+Returns a lazily computed value that is cached after first access. Access the result via `.value`.
 
 ```ts
 const settings = lazy(() => loadSettings());
@@ -446,6 +406,11 @@ roundToStep(-5.26, 0.25); // -5.25
 #### `findNearest`
 
 Returns the closest value from a list, with configurable tie-breaking.
+
+Bias options:
+
+- `"first"` / `"last"` — prefer the item that appears earlier or later in the array.
+- `"smaller"` / `"larger"` — prefer the numerically smaller or larger tied value.
 
 ```ts
 const items = [1, 3, 5, 7, 9];
@@ -675,11 +640,6 @@ sampleTwo(); // random 2-item sample each call
 
 ### String
 
-- `isString(value)` — guard
-- `contains(string, substring, locale?)` — case/diacritic-insensitive substring check
-- `pluralize(count, terms, includeCount?)` — choose singular/plural terms with optional count prefix
-- `base64Encode(value, mimeType?)` — base64 encoding or data URI generation
-
 #### `isString`
 
 Type guard for string values.
@@ -728,23 +688,123 @@ base64Encode("hello", "text/plain");
 // "data:text/plain;base64,aGVsbG8="
 ```
 
-### Types (type-only)
+### Types
 
-- `Satisfies<T, Base>` — ensure a type is assignable to a base type while preserving detail
-- `Maybe<T>` — represent a value that can be `T`, `null`, `undefined`, or `false`
-- `Prettify<T>` — flatten and simplify displayed object/intersection types
-- `NonNullableValues<T>` — remove `null` and `undefined` from all property value types
-- `SomeRequired<T, K>` — make a subset of keys required while keeping others unchanged
-- `SomeOptional<T, K>` — make a subset of keys optional while keeping others unchanged
-- `TupleOf<T, N>` — build a tuple of fixed length `N` filled with `T`
-- `Widen<T>` — widen literal types to their broader primitive counterparts
-- `UnknownRecord` — alias for a generic object map with unknown values
+#### `Maybe<T>`
 
-Type examples:
+Represents a maybe-present value for app-level checks.
 
 ```ts
-type ApiMode = Satisfies<"prod" | "dev", string>; // "prod" | "dev"
-type MaybeName = Maybe<string>; // string | null | undefined | false
-type RequiredId = SomeRequired<{ id?: string; name?: string }, "id">;
-type Triple = TupleOf<number, 3>; // [number, number, number]
+type MaybeName = Maybe<string>;
+//   ^? string | null | undefined | false
+```
+
+#### `Prettify<T>`
+
+Flattens intersections and mapped types into a cleaner displayed shape.
+
+```ts
+type Raw = { id: string } & { name: string };
+type User = Prettify<Raw>;
+//   ^? { id: string; name: string }
+```
+
+#### `Satisfies<T, Base>`
+
+Constrains `T` to be assignable to `Base` while preserving `T`'s full detail.
+
+```ts
+type Endpoint = Satisfies<
+  { method: "GET"; path: "/users" },
+  { method: "GET" | "POST"; path: string }
+>;
+//   ^? { method: "GET"; path: "/users" }
+```
+
+#### `NonNullableValues<T>`
+
+Removes `null` and `undefined` from each property value type.
+
+```ts
+type Input = { id: string | null; age?: number | undefined };
+type Output = NonNullableValues<Input>;
+//   ^? { id: string; age?: number }
+```
+
+#### `SomeRequired<T, K>`
+
+Makes a subset of keys required while leaving all other keys unchanged.
+
+```ts
+type Input = { id?: string; name?: string; active?: boolean };
+type Output = SomeRequired<Input, "id">;
+//   ^? { id: string; name?: string; active?: boolean }
+```
+
+#### `SomeOptional<T, K>`
+
+Makes a subset of keys optional while leaving all other keys unchanged.
+
+```ts
+type Input = { id: string; name: string; active: boolean };
+type Output = SomeOptional<Input, "active">;
+//   ^? { id: string; name: string; active?: boolean }
+```
+
+#### `TupleOf<T, N>`
+
+Builds a fixed-length tuple of `N` elements of type `T`.
+
+```ts
+type Triple = TupleOf<number, 3>;
+//   ^? [number, number, number]
+```
+
+#### `Widen<T>`
+
+Widens literals to their broader primitive types.
+
+```ts
+type A = Widen<"hello">;
+//   ^? string
+type B = Widen<42>;
+//   ^? number
+```
+
+#### `UnknownRecord`
+
+Alias for a generic object map with unknown values.
+
+```ts
+type Payload = UnknownRecord;
+//   ^? Record<string, unknown>
+```
+
+---
+
+## Development
+
+### Setup
+
+Prerequisites:
+
+- Node.js `24` (active LTS)
+- pnpm `10.33.0` (managed via Corepack or installed globally)
+
+```bash
+nvm use
+pnpm install
+```
+
+### Scripts
+
+```bash
+pnpm check          # run all static checks
+pnpm check:types    # TypeScript
+pnpm check:lint     # ESLint
+pnpm check:format   # Prettier
+
+pnpm test           # run tests once
+pnpm test:watch     # watch mode
+pnpm test:coverage  # run tests with v8 coverage
 ```

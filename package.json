@@ -72,7 +72,13 @@
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "pnpm test && pnpm build"
   },
-  "keywords": [],
+  "keywords": [
+    "typescript",
+    "utils",
+    "utilities",
+    "helpers",
+    "type-guards"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
