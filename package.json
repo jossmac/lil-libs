@@ -28,10 +28,6 @@
       "types": "./dist/console.d.ts",
       "import": "./dist/console.js"
     },
-    "./env": {
-      "types": "./dist/env.d.ts",
-      "import": "./dist/env.js"
-    },
     "./error": {
       "types": "./dist/error.d.ts",
       "import": "./dist/error.js"

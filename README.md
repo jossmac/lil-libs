@@ -151,12 +151,7 @@ switch (status.kind) {
 
 #### `errorOnce`
 
-Logs each unique error message only once per runtime instance.
-
-Behaviour:
-
-- Repeated error messages are ignored after the first log.
-- No-op in production environments.
+Logs each unique **error** message only once per runtime instance.
 
 ```ts
 errorOnce("API request failed");
@@ -165,13 +160,7 @@ errorOnce("API request failed"); // ignored
 
 #### `warnOnce`
 
-Logs each unique warning message only once per runtime instance.
-
-Behaviour:
-
-- Repeated warning messages are ignored after the first log.
-- Message tracking is independent from `errorOnce`.
-- No-op in production environments.
+Logs each unique **warning** message only once per runtime instance.
 
 ```ts
 warnOnce("Using fallback value");
@@ -227,33 +216,6 @@ Returns an `Error` instance from unknown thrown input.
 ensureError(new Error("boom")); // same Error instance
 ensureError("boom"); // Error("boom")
 ensureError({ message: "boom", name: "CustomError" }); // Error with copied metadata
-```
-
-### Env
-
-#### `getEnvVariable`
-
-Returns the first matching runtime env string in this order:
-
-1. `import.meta.env`
-2. `process.env`
-3. `globalThis.__env__`
-
-Only string values are returned.
-
-```ts
-const apiBaseUrl = getEnvVariable("API_BASE_URL");
-const mode = getEnvVariable("MODE");
-```
-
-#### `isProductionEnv`
-
-Returns `true` when either `MODE` or `NODE_ENV` is `"production"`.
-
-```ts
-if (!isProductionEnv()) {
-  loggingService("Logging enabled");
-}
 ```
 
 ### Function
@@ -779,8 +741,6 @@ Alias for a generic object map with unknown values.
 type Payload = UnknownRecord;
 //   ^? Record<string, unknown>
 ```
-
----
 
 ## Development
 

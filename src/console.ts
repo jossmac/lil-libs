@@ -1,5 +1,3 @@
-import { isProductionEnv } from "./env";
-
 /**
  * Factory function to create a once-only console logging function.
  * Messages are tracked and only logged the first time they are seen.
@@ -10,8 +8,6 @@ import { isProductionEnv } from "./env";
 function createOnceLogger(
   logFn: (message: string) => void,
 ): (message: string) => void {
-  if (isProductionEnv()) return () => {};
-
   const seen = new Set<string>();
 
   return (message: string) => {
@@ -23,7 +19,6 @@ function createOnceLogger(
 
 /**
  * Log an error message to the console, but only once per unique message.
- * No-op in production.
  *
  * @param message - The error message to log
  */
@@ -31,7 +26,6 @@ export const errorOnce = createOnceLogger(console.error.bind(console));
 
 /**
  * Log a warning message to the console, but only once per unique message.
- * No-op in production.
  *
  * @param message - The warning message to log
  */
