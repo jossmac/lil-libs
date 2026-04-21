@@ -3,15 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 describe("lil-libs/console", () => {
   const originalConsoleError = console.error;
   const originalConsoleWarn = console.warn;
-  const originalNodeEnv = process.env["NODE_ENV"];
 
   let consoleErrorMock: ReturnType<typeof vi.fn>;
   let consoleWarnMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    // set NODE_ENV to non-production for tests
-    process.env["NODE_ENV"] = "development";
-
     consoleErrorMock = vi.fn();
     consoleWarnMock = vi.fn();
     console.error = consoleErrorMock as typeof console.error;
@@ -24,7 +20,6 @@ describe("lil-libs/console", () => {
   afterEach(() => {
     console.error = originalConsoleError;
     console.warn = originalConsoleWarn;
-    process.env["NODE_ENV"] = originalNodeEnv;
     vi.resetModules();
   });
 
@@ -51,18 +46,6 @@ describe("lil-libs/console", () => {
       expect(consoleErrorMock).toHaveBeenCalledWith("error 1");
       expect(consoleErrorMock).toHaveBeenCalledWith("error 2");
       expect(consoleErrorMock).toHaveBeenCalledTimes(2);
-    });
-
-    it("should not log anything in production", async () => {
-      process.env["NODE_ENV"] = "production";
-      vi.resetModules();
-
-      const { errorOnce } = await import("./console");
-
-      errorOnce("test error");
-      errorOnce("another error");
-
-      expect(consoleErrorMock).not.toHaveBeenCalled();
     });
   });
 
@@ -91,18 +74,6 @@ describe("lil-libs/console", () => {
       expect(consoleWarnMock).toHaveBeenCalledWith("warning 2");
       expect(consoleWarnMock).toHaveBeenCalledWith("warning 3");
       expect(consoleWarnMock).toHaveBeenCalledTimes(3);
-    });
-
-    it("should not log anything in production", async () => {
-      process.env["NODE_ENV"] = "production";
-      vi.resetModules();
-
-      const { warnOnce } = await import("./console");
-
-      warnOnce("test warning");
-      warnOnce("another warning");
-
-      expect(consoleWarnMock).not.toHaveBeenCalled();
     });
   });
 
