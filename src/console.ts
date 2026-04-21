@@ -1,8 +1,4 @@
-const IS_PRODUCTION =
-  (import.meta as { env?: { MODE?: string } }).env?.MODE === "production" ||
-  (typeof globalThis !== "undefined" &&
-    typeof globalThis.process !== "undefined" &&
-    globalThis.process.env?.["NODE_ENV"] === "production");
+import { isProductionEnv } from "./env";
 
 /**
  * Factory function to create a once-only console logging function.
@@ -14,7 +10,7 @@ const IS_PRODUCTION =
 function createOnceLogger(
   logFn: (message: string) => void,
 ): (message: string) => void {
-  if (IS_PRODUCTION) return () => {};
+  if (isProductionEnv()) return () => {};
 
   const seen = new Set<string>();
 
@@ -31,7 +27,7 @@ function createOnceLogger(
  *
  * @param message - The error message to log
  */
-export const errorOnce = createOnceLogger(console.error);
+export const errorOnce = createOnceLogger(console.error.bind(console));
 
 /**
  * Log a warning message to the console, but only once per unique message.
@@ -39,4 +35,4 @@ export const errorOnce = createOnceLogger(console.error);
  *
  * @param message - The warning message to log
  */
-export const warnOnce = createOnceLogger(console.warn);
+export const warnOnce = createOnceLogger(console.warn.bind(console));

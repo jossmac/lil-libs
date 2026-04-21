@@ -66,6 +66,11 @@ import { contains, pluralize } from "lil-libs/string";
 - `parseError(value, fallback?)` — extract display-safe error messages
 - `ensureError(value)` — normalize unknown thrown values to `Error`
 
+### env
+
+- `getEnvVariable(name)` — resolve env values in this order: `import.meta.env`, `process.env`, then `globalThis.__env__`
+- `isProductionEnv()` — convenience function for common case
+
 ### function
 
 - `noop()` — no-op placeholder
