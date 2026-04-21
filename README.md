@@ -1,6 +1,6 @@
 # lil-libs
 
-Small, focused TypeScript utility libraries for common app-level tasks. Zero runtime dependencies.
+A small collection of TypeScript-first utilities for everyday application code. Each module is focused, composable, and ships with zero runtime dependencies.
 
 ## API Overview
 
