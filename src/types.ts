@@ -5,9 +5,9 @@
 export type Satisfies<T extends Base, Base> = T;
 
 /**
- * Qualify a type with "falsy" values that may be `undefined`, `null`, or `false`.
+ * Qualify a type with "falsy" values that may be `null` or `undefined`.
  */
-export type Maybe<T> = T | undefined | null | false;
+export type Maybe<T> = T | undefined | null;
 
 /**
  * Takes a type as its only argument and returns it without intersections,

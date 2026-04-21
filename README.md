@@ -658,7 +658,7 @@ Represents a maybe-present value for app-level checks.
 
 ```ts
 type MaybeName = Maybe<string>;
-//   ^? string | null | undefined | false
+//   ^? string | null | undefined
 ```
 
 #### `Prettify<T>`

@@ -21,10 +21,8 @@ describe("lil-libs/types", () => {
   });
 
   describe("Maybe", () => {
-    it("adds undefined, null, and false to a type", () => {
-      expectTypeOf<Maybe<number>>().toEqualTypeOf<
-        number | undefined | null | false
-      >();
+    it("adds `null` and `undefined` to a type", () => {
+      expectTypeOf<Maybe<number>>().toEqualTypeOf<number | undefined | null>();
     });
   });
 
