@@ -22,6 +22,11 @@ pnpm install
 ## Scripts
 
 ```bash
+pnpm check          # run all static checks
+pnpm check:types
+pnpm check:lint
+pnpm check:format
+
 pnpm test           # run tests once
 pnpm test:watch     # watch mode
 pnpm test:coverage  # run tests with v8 coverage
