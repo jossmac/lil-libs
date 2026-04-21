@@ -20,7 +20,7 @@ export function isLength<T, N extends number>(
 }
 
 /**
- * Converts a value to an array, if it is not already an array.
+ * Converts a value to `Array`, if it is not already.
  *
  * @example
  * toArray(1); // [1]
@@ -85,6 +85,31 @@ export function chunk<T>(arr: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
     arr.slice(i * size, i * size + size),
   );
+}
+
+/**
+ * Splits an array into two arrays: one with items that satisfy a predicate, and
+ * one with items that do not.
+ *
+ * @example
+ * partition([1, 2, 3, 4], x => x % 2 === 0); // [[2, 4], [1, 3]]
+ *
+ * @param arr - The array to partition.
+ * @param predicate - The function to determine which partition an item belongs to.
+ * @returns A tuple of two arrays: the first with items that satisfy the predicate, and the second with items that do not.
+ */
+export function partition<T>(
+  arr: T[],
+  predicate: (item: T, index: number, array: T[]) => boolean,
+): [T[], T[]] {
+  const truthy: T[] = [];
+  const falsy: T[] = [];
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i]!;
+    if (predicate(item, i, arr)) truthy.push(item);
+    else falsy.push(item);
+  }
+  return [truthy, falsy];
 }
 
 /**

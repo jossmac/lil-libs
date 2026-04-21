@@ -6,6 +6,7 @@ import {
   isIterable,
   isLength,
   isNonEmpty,
+  partition,
   toArray,
 } from "./array";
 
@@ -37,6 +38,48 @@ describe("lil-libs/array", () => {
     it("returns the correct type", () => {
       expectTypeOf(chunk([1, 2, 3], 2)).toEqualTypeOf<number[][]>();
       expectTypeOf(chunk(["a", "b", "c"], 2)).toEqualTypeOf<string[][]>();
+    });
+  });
+
+  describe("partition", () => {
+    it("splits items into truthy and falsy partitions", () => {
+      expect(partition([1, 2, 3, 4, 5], (n) => n % 2 === 0)).toEqual([
+        [2, 4],
+        [1, 3, 5],
+      ]);
+      expect(partition(["a", "bb", "ccc"], (s) => s.length > 1)).toEqual([
+        ["bb", "ccc"],
+        ["a"],
+      ]);
+    });
+
+    it("returns two empty arrays when input is empty", () => {
+      expect(partition([], () => true)).toEqual([[], []]);
+    });
+
+    it("passes item, index, and array to predicate", () => {
+      const input = [10, 20, 30];
+      const calls: Array<[number, number, number[]]> = [];
+
+      partition(input, (item, index, array) => {
+        calls.push([item, index, array]);
+        return index % 2 === 0;
+      });
+
+      expect(calls).toEqual([
+        [10, 0, input],
+        [20, 1, input],
+        [30, 2, input],
+      ]);
+    });
+
+    it("returns the correct type", () => {
+      expectTypeOf(partition([1, 2, 3], (n) => n > 1)).toEqualTypeOf<
+        [number[], number[]]
+      >();
+      expectTypeOf(partition(["a", "bb"], (s) => s.length > 1)).toEqualTypeOf<
+        [string[], string[]]
+      >();
     });
   });
 
