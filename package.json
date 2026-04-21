@@ -65,6 +65,8 @@
     "check:types": "tsc --noEmit",
     "check:lint": "eslint . --ext .ts",
     "check:format": "prettier --check .",
+    "fix:lint": "eslint . --ext .ts --fix",
+    "fix:format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
