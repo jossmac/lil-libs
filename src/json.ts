@@ -8,8 +8,10 @@
  * - when calling `JSON.parse()` on the result, the `BigInt` values will remain
  *   strings.
  */
-export function stringifyWithBigIntAsString(objectLike: unknown): string {
-  return JSON.stringify(objectLike, (_key, value) =>
+export function stringifyWithBigIntAsString(
+  value: unknown,
+): string | undefined {
+  return JSON.stringify(value, (_key, value) =>
     typeof value === "bigint" ? value.toString() : value,
   );
 }
@@ -21,21 +23,21 @@ export function stringifyWithBigIntAsString(objectLike: unknown): string {
  *
  * Handles: objects (sorted keys), arrays (preserved order), primitives, and null.
  */
-export function stringifyWithSortedKeys(value: unknown): string {
-  if (value == null || typeof value !== "object") {
-    return JSON.stringify(value);
-  }
+export function stringifyWithSortedKeys(value: unknown): string | undefined {
+  return JSON.stringify(value, (_key, currentValue) => {
+    if (
+      currentValue == null ||
+      typeof currentValue !== "object" ||
+      Array.isArray(currentValue)
+    ) {
+      return currentValue;
+    }
 
-  if (Array.isArray(value)) {
-    return `[${value.map(stringifyWithSortedKeys).join(",")}]`;
-  }
-
-  const obj = value as Record<string, unknown>;
-  const sorted = Object.keys(obj)
-    .sort()
-    .filter((k) => obj[k] !== undefined)
-    .map((k) => `${JSON.stringify(k)}:${stringifyWithSortedKeys(obj[k])}`)
-    .join(",");
-
-  return `{${sorted}}`;
+    const record = currentValue as Record<string, unknown>;
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(record).sort()) {
+      sorted[key] = record[key];
+    }
+    return sorted;
+  });
 }

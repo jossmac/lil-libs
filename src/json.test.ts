@@ -13,6 +13,12 @@ describe("lil-libs/json", () => {
       const result = stringifyWithBigIntAsString({ foo: "bar" });
       expect(result).toBe('{"foo":"bar"}');
     });
+
+    it("should return undefined for top-level non-serializable values", () => {
+      expect(stringifyWithBigIntAsString(undefined)).toBeUndefined();
+      expect(stringifyWithBigIntAsString(() => "x")).toBeUndefined();
+      expect(stringifyWithBigIntAsString(Symbol("x"))).toBeUndefined();
+    });
   });
 
   describe("stringifyWithSortedKeys", () => {
@@ -49,6 +55,31 @@ describe("lil-libs/json", () => {
 
     it("should handle undefined values in objects (omitted by JSON.stringify)", () => {
       expect(stringifyWithSortedKeys({ a: undefined })).toBe("{}");
+    });
+
+    it("should omit function and symbol values in objects", () => {
+      expect(
+        stringifyWithSortedKeys({ a: () => "x", b: Symbol("x"), c: 1 }),
+      ).toBe('{"c":1}');
+    });
+
+    it("should serialize undefined, functions and symbols as null in arrays", () => {
+      expect(stringifyWithSortedKeys([undefined, () => "x", Symbol("x")])).toBe(
+        "[null,null,null]",
+      );
+    });
+
+    it("should honor toJSON behavior (e.g. Date)", () => {
+      const value = { d: new Date("2020-01-01T00:00:00.000Z") };
+      expect(stringifyWithSortedKeys(value)).toBe(
+        '{"d":"2020-01-01T00:00:00.000Z"}',
+      );
+    });
+
+    it("should return undefined for top-level non-serializable values", () => {
+      expect(stringifyWithSortedKeys(undefined)).toBeUndefined();
+      expect(stringifyWithSortedKeys(() => "x")).toBeUndefined();
+      expect(stringifyWithSortedKeys(Symbol("x"))).toBeUndefined();
     });
 
     it("should handle empty objects and arrays", () => {
