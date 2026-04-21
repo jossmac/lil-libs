@@ -32,6 +32,7 @@ export function isFiniteNumber(value: unknown): value is number {
 export function isAscending(items: number[]): boolean {
   // arrays with 0 or 1 elements are trivially sorted
   if (items.length <= 1) return true;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- indices are guaranteed to be valid
   return items.every((x, i, arr) => i === 0 || arr[i - 1]! <= x);
 }
 
@@ -44,6 +45,7 @@ export function isAscending(items: number[]): boolean {
 export function isDescending(items: number[]): boolean {
   // arrays with 0 or 1 elements are trivially sorted
   if (items.length <= 1) return true;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- indices are guaranteed to be valid
   return items.every((x, i, arr) => i === 0 || arr[i - 1]! >= x);
 }
 

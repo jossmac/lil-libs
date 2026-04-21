@@ -16,6 +16,7 @@ describe("lil-libs/object", () => {
     });
 
     it("should return false for non-plain values", () => {
+      // eslint-disable-next-line @typescript-eslint/no-extraneous-class
       class Example {}
 
       expect(isPlainObject(null)).toBe(false);

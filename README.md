@@ -32,9 +32,9 @@ pnpm test:coverage  # run tests with v8 coverage
 There is no barrel export file in this repo, import from each module directly.
 
 ```ts
-import { chunk, isNonEmpty } from "lil-libs/array";
-import { clamp, remap, sequence } from "lil-libs/number";
-import { contains, pluralize } from "lil-libs/string";
+import { chunk, isNonEmpty } from "@jossmac/lil-libs/array";
+import { clamp, remap, sequence } from "@jossmac/lil-libs/number";
+import { contains, pluralize } from "@jossmac/lil-libs/string";
 ```
 
 ## API Overview

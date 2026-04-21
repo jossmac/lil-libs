@@ -113,6 +113,7 @@ export function createStableKeySelector<const T extends readonly string[]>(
       hash = value.charCodeAt(i) + ((hash << 5) - hash);
     }
     const index = Math.abs(hash) % keys.length;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- keys length is guaranteed to be > 0 (isNonEmpty assertion)
     return keys[index]!;
   };
 }

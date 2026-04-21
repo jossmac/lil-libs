@@ -14,7 +14,7 @@ export function assert<T>(
   value: T | null | undefined,
   message?: string,
 ): asserts value is T;
-export function assert(value: any, message?: string) {
+export function assert(value: unknown, message?: string) {
   if (value === false || value === null || typeof value === "undefined") {
     throw new Error(message || "Assertion failed");
   }
@@ -43,7 +43,7 @@ export function ensure<T>(
   value: T | false | null | undefined,
   message?: string,
 ): T;
-export function ensure(value: any, message?: string) {
+export function ensure(value: unknown, message?: string) {
   assert(value, message);
   return value;
 }

@@ -59,6 +59,7 @@ describe("lil-libs/string", () => {
       const svg = `<svg>\n  <g>\n    <text>Hi</text>\n  </g>\n</svg>`;
       const encoded = base64Encode(svg, "image/svg+xml");
       expect(encoded).toContain("data:image/svg+xml;base64,");
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       expect(atob(encoded.split(",")[1]!)).toBe(
         "<svg><g><text>Hi</text></g></svg>",
       );
