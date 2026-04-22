@@ -2,11 +2,9 @@
 
 A small collection of TypeScript-first utilities for everyday application code. Each module is focused, composable, and ships with zero runtime dependencies.
 
-## API Overview
+## Array
 
-### Array
-
-#### `isPopulatedArray`
+### `isPopulatedArray`
 
 Type guard for narrowing an array to a non-empty tuple-like type.
 
@@ -18,7 +16,7 @@ if (isPopulatedArray(values)) {
 }
 ```
 
-#### `isLength`
+### `isLength`
 
 Type guard for narrowing an array to a tuple of a specific length.
 
@@ -30,7 +28,7 @@ if (isLength(values, 3)) {
 }
 ```
 
-#### `toArray`
+### `toArray`
 
 Returns an array for nullish, scalar, iterable, or array input.
 
@@ -40,7 +38,7 @@ toArray(1); // [1]
 toArray(new Set([1, 2])); // [1, 2]
 ```
 
-#### `isIterable`
+### `isIterable`
 
 Type guard that checks whether a value implements the iterable protocol.
 
@@ -51,7 +49,7 @@ isIterable([]); // true
 isIterable({}); // false
 ```
 
-#### `chunk`
+### `chunk`
 
 Splits an array into fixed-size chunks.
 
@@ -63,7 +61,7 @@ chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]
 chunk([], 2); // []
 ```
 
-#### `partition`
+### `partition`
 
 Splits an array into two arrays using a predicate.
 
@@ -81,7 +79,7 @@ partition(["a", "bb", "ccc"], (s) => s.length > 1);
 // [["bb", "ccc"], ["a"]]
 ```
 
-#### `createStableKeySelector`
+### `stableKeyFactory`
 
 Creates a function that deterministically maps a string to one of the provided keys using a stable hash.
 
@@ -94,7 +92,7 @@ Behaviour:
 
 ```ts
 const colors = ["red", "green", "blue"] as const;
-const getColor = createStableKeySelector(colors);
+const getColor = stableKeyFactory(colors);
 
 getColor("Albert"); // 'blue'
 getColor("Barbara"); // 'green'
@@ -104,9 +102,9 @@ const color = getColor("David");
 //    ^? 'red' | 'green' | 'blue' (inferred return type)
 ```
 
-### Assert
+## Assert
 
-#### `assert`
+### `assert`
 
 Asserts that a value is present (or that a boolean is `true`).
 
@@ -122,7 +120,7 @@ assert(maybeName, "Name is required");
 // maybeName is now string
 ```
 
-#### `ensure`
+### `ensure`
 
 Returns the validated value, or throws if assertion fails.
 
@@ -132,7 +130,7 @@ const user = ensure(maybeUser, "User is required");
 // user is User
 ```
 
-#### `assertNever`
+### `assertNever`
 
 Throws for unreachable branches in discriminated unions.
 
@@ -147,9 +145,9 @@ switch (status.kind) {
 }
 ```
 
-### Console
+## Console
 
-#### `errorOnce`
+### `errorOnce`
 
 Logs each unique **error** message only once per runtime instance.
 
@@ -158,7 +156,7 @@ errorOnce("API request failed");
 errorOnce("API request failed"); // ignored
 ```
 
-#### `warnOnce`
+### `warnOnce`
 
 Logs each unique **warning** message only once per runtime instance.
 
@@ -167,9 +165,9 @@ warnOnce("Using fallback value");
 warnOnce("Using fallback value"); // ignored
 ```
 
-### Error
+## Error
 
-#### `isError`
+### `isError`
 
 Guard for native `Error` instances.
 
@@ -178,7 +176,7 @@ isError(new Error("boom")); // true
 isError("boom"); // false
 ```
 
-#### `isErrorLike`
+### `isErrorLike`
 
 Guard for error-like objects exposing a string `message` property.
 
@@ -187,7 +185,7 @@ isErrorLike({ message: "boom" }); // true
 isErrorLike({ message: 123 }); // false
 ```
 
-#### `parseError`
+### `parseError`
 
 Returns a human-readable error message from unknown input.
 
@@ -208,7 +206,7 @@ parseError({ message: 123 }); // "An unknown error occurred."
 parseError(null, "Custom fallback"); // "Custom fallback"
 ```
 
-#### `ensureError`
+### `ensureError`
 
 Returns an `Error` instance from unknown thrown input.
 
@@ -218,9 +216,9 @@ ensureError("boom"); // Error("boom")
 ensureError({ message: "boom", name: "CustomError" }); // Error with copied metadata
 ```
 
-### Function
+## Function
 
-#### `noop`
+### `noop`
 
 Does nothing and returns `undefined`.
 
@@ -228,7 +226,7 @@ Does nothing and returns `undefined`.
 button.addEventListener("click", noop);
 ```
 
-#### `isDefined`
+### `isDefined`
 
 Type guard for filtering out `null` and `undefined` without losing type precision.
 
@@ -237,7 +235,7 @@ const ids = [1, null, 2, undefined, 3].filter(isDefined);
 //    ^? number[]
 ```
 
-#### `not`
+### `not`
 
 Inverts a predicate.
 
@@ -249,7 +247,7 @@ isOdd(3); // true
 isOdd(4); // false
 ```
 
-#### `resolveMaybeFn`
+### `resolveMaybeFn`
 
 Returns a value directly or by invoking a unary function.
 
@@ -258,7 +256,7 @@ resolveMaybeFn(42); // 42
 resolveMaybeFn((x: number) => x * 2, 21); // 42
 ```
 
-#### `lazy`
+### `lazy`
 
 Returns a lazily computed value that is cached after first access. Access the result via `.value`.
 
@@ -269,9 +267,56 @@ settings.value; // computes once
 settings.value; // cached
 ```
 
-### JSON
+## Format
 
-#### `stringifyWithBigIntAsString`
+### `formatInitials`
+
+Returns initials for names with Unicode-aware grapheme support.
+
+Behaviour:
+
+- Defaults to `maxLetters = 2`.
+- Uses first + last word initials for multi-word names when `maxLetters === 2`.
+- Uses the first letter from each word (left to right) when `maxLetters >= 3`.
+- For single-word names, uses the first `maxLetters` letters.
+- Returns `"?"` for empty or whitespace-only input.
+- Throws when `maxLetters` is not finite or is less than `1`.
+
+```ts
+formatInitials("John Doe"); // "JD"
+formatInitials("John Ronald Reuel Tolkien"); // "JT"
+formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
+formatInitials("ilker", { locale: "tr" }); // "İL"
+formatInitials("李小龍"); // "李小"
+```
+
+### `relativeTime`
+
+Formats a date as relative time for recent values and falls back to a date string for older values.
+
+Behaviour:
+
+- Accepts a `Date` or ISO 8601 string.
+- Returns relative output (e.g. `"1 minute ago"`) for values within 24 hours.
+- Returns a localized date string once the value is 24 hours old or more.
+- Supports relative formatting via `numeric` and `style` options.
+- Supports custom date formatting via `Intl.DateTimeFormat` options.
+
+```ts
+relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
+relativeTime(new Date(Date.now() - 1_000), { numeric: "auto" }); // "Just now"
+relativeTime(new Date(Date.now() - 1_000 * 60), { style: "short" }); // "1 min. ago"
+
+relativeTime(
+  new Date(Date.now() - 1_000 * 60 * 60 * 24),
+  {},
+  { dateStyle: "medium" },
+); // "Jan 6, 2026" (locale-dependent)
+```
+
+## JSON
+
+### `stringifyWithBigIntAsString`
 
 Serialises JSON while converting `BigInt` values to strings.
 
@@ -280,7 +325,7 @@ stringifyWithBigIntAsString({ id: 123n });
 // '{"id":"123"}'
 ```
 
-#### `stringifyWithSortedKeys`
+### `stringifyWithSortedKeys`
 
 Serialises deterministic JSON by sorting object keys at every nesting level.
 
@@ -298,9 +343,9 @@ stringifyWithSortedKeys([{ z: 1, a: 2 }]);
 // '[{"a":2,"z":1}]'
 ```
 
-### Number
+## Number
 
-#### `isNumber`
+### `isNumber`
 
 Runtime guard for JavaScript numbers, excluding `NaN`.
 
@@ -310,7 +355,7 @@ isNumber(NaN); // false
 isNumber(Infinity); // true
 ```
 
-#### `isFiniteNumber`
+### `isFiniteNumber`
 
 Runtime guard for finite numbers.
 
@@ -319,7 +364,7 @@ isFiniteNumber(42); // true
 isFiniteNumber(Infinity); // false
 ```
 
-#### `isAscending`
+### `isAscending`
 
 Checks whether an array is in ascending order (allowing equal neighbouring values).
 
@@ -328,7 +373,7 @@ isAscending([1, 1, 2, 3]); // true
 isAscending([3, 2, 1]); // false
 ```
 
-#### `isDescending`
+### `isDescending`
 
 Checks whether an array is in descending order (allowing equal neighbouring values).
 
@@ -337,7 +382,7 @@ isDescending([3, 3, 2, 1]); // true
 isDescending([1, 2, 3]); // false
 ```
 
-#### `clamp`
+### `clamp`
 
 Constrains a number to an inclusive range.
 
@@ -347,7 +392,7 @@ clamp(-5, 0, 10); // 0
 clamp(15, 0, 10); // 10
 ```
 
-#### `roundToPrecision`
+### `roundToPrecision`
 
 Rounds a number to a specified number of fractional digits.
 
@@ -356,7 +401,7 @@ roundToPrecision(3.14159, 2); // 3.14
 roundToPrecision(3.005, 2); // 3.01
 ```
 
-#### `roundToStep`
+### `roundToStep`
 
 Rounds a number to the nearest step interval.
 
@@ -365,7 +410,7 @@ roundToStep(5.26, 0.25); // 5.25
 roundToStep(-5.26, 0.25); // -5.25
 ```
 
-#### `findNearest`
+### `findNearest`
 
 Returns the closest value from a list, with configurable tie-breaking.
 
@@ -383,7 +428,7 @@ findNearest(4, items, "smaller"); // 3
 findNearest(4, items, "larger"); // 5
 ```
 
-#### `sequence`
+### `sequence`
 
 Generates inclusive numeric sequences in ascending or descending order.
 
@@ -400,7 +445,7 @@ sequence(5, 1); // [5, 4, 3, 2, 1]
 sequence(0, 1, 0.33); // [0, 0.33, 0.66, 0.99]
 ```
 
-#### `lerp`
+### `lerp`
 
 Linear interpolation between two values.
 
@@ -408,7 +453,7 @@ Linear interpolation between two values.
 lerp(0, 100, 0.25); // 25
 ```
 
-#### `unlerp`
+### `unlerp`
 
 Inverse interpolation that returns a clamped factor in the `0..1` range.
 
@@ -420,7 +465,7 @@ unlerp(0, 10, -5); // 0
 unlerp(0, 10, 15); // 1
 ```
 
-#### `remap`
+### `remap`
 
 Maps a value from one numeric range to another using linear interpolation.
 
@@ -442,9 +487,9 @@ remap(15, [0, 10], [0, 100]); // 100 (clamped)
 remap(15, [0, 10], [0, 100], { clamp: false }); // 150
 ```
 
-### Object
+## Object
 
-#### `isPlainObject`
+### `isPlainObject`
 
 Checks whether a value is a plain object (including `Object.create(null)`).
 
@@ -455,7 +500,7 @@ isPlainObject([]); // false
 isPlainObject(new Date()); // false
 ```
 
-#### `typedKeys`
+### `typedKeys`
 
 Typed alternative to `Object.keys()` that preserves key inference.
 
@@ -466,7 +511,7 @@ const keys = typedKeys(obj);
 //    ^? ("foo" | "bar")[]
 ```
 
-#### `typedEntries`
+### `typedEntries`
 
 Typed alternative to `Object.entries()` that preserves key/value tuples.
 
@@ -477,7 +522,7 @@ const entries = typedEntries(obj);
 //    ^? (["foo", number] | ["bar", string])[]
 ```
 
-#### `typedFromEntries`
+### `typedFromEntries`
 
 Typed alternative to `Object.fromEntries()` that preserves output shape.
 
@@ -491,7 +536,7 @@ const rebuilt = typedFromEntries(entries);
 //    ^? { foo: number; bar: string }
 ```
 
-#### `TObject`
+### `TObject`
 
 Provides a namespace-like wrapper around the typed object helpers.
 
@@ -500,9 +545,9 @@ const keys = TObject.keys({ foo: 1, bar: "hello" });
 //    ^? ("foo" | "bar")[]
 ```
 
-### Random
+## Random
 
-#### `random.bool`
+### `random.bool`
 
 Returns random boolean values.
 
@@ -510,7 +555,7 @@ Returns random boolean values.
 random.bool(); // true or false
 ```
 
-#### `random.int`
+### `random.int`
 
 Generates random integers in an inclusive range.
 
@@ -524,7 +569,7 @@ random.int(1, 3); // 1, 2, or 3
 random.int(10, 1); // still valid
 ```
 
-#### `random.float`
+### `random.float`
 
 Generates random floating-point numbers in a half-open range.
 
@@ -538,7 +583,7 @@ random.float(10, 20); // 10 <= n < 20
 random.float(20, 10); // still valid
 ```
 
-#### `random.choice`
+### `random.choice`
 
 Returns one random item from an array.
 
@@ -546,7 +591,7 @@ Returns one random item from an array.
 random.choice(["a", "b", "c"]); // one item
 ```
 
-#### `random.sample`
+### `random.sample`
 
 Returns a randomly sampled subset without mutating the original array.
 
@@ -567,7 +612,7 @@ random.sample(items, 0); // []
 items; // still ["a", "b", "c", "d"]
 ```
 
-#### `random.shuffle`
+### `random.shuffle`
 
 Returns a shuffled copy without mutating the original array.
 
@@ -578,7 +623,7 @@ random.shuffle(items); // shuffled copy
 items; // unchanged
 ```
 
-#### `random.shuffler`
+### `random.shuffler`
 
 Creates a function that returns a newly shuffled copy on each call.
 
@@ -589,7 +634,7 @@ const shuffleNow = random.shuffler(items);
 shuffleNow(); // shuffled copy each call
 ```
 
-#### `random.sampler`
+### `random.sampler`
 
 Creates a function that returns a random sample on each call.
 
@@ -600,9 +645,9 @@ const sampleTwo = random.sampler(items, 2);
 sampleTwo(); // random 2-item sample each call
 ```
 
-### String
+## String
 
-#### `isString`
+### `isString`
 
 Type guard for string values.
 
@@ -611,7 +656,7 @@ isString("hello"); // true
 isString(123); // false
 ```
 
-#### `contains`
+### `contains`
 
 Case-insensitive and diacritic-insensitive substring matching.
 
@@ -621,7 +666,7 @@ contains("Hello World", "world"); // true
 contains("hello", "bye"); // false
 ```
 
-#### `pluralize`
+### `pluralize`
 
 Returns singular/plural forms with optional count prefix.
 
@@ -632,7 +677,7 @@ pluralize(2, ["person", "people"]); // "2 people"
 pluralize(2, ["person", "people"], false); // "people"
 ```
 
-#### `base64Encode`
+### `base64Encode`
 
 Encodes UTF-8 strings to base64, or to a base64 data URI when a MIME type is provided.
 
@@ -650,9 +695,9 @@ base64Encode("hello", "text/plain");
 // "data:text/plain;base64,aGVsbG8="
 ```
 
-### Types
+## Types
 
-#### `Maybe<T>`
+### `Maybe<T>`
 
 Represents a maybe-present value for app-level checks.
 
@@ -661,7 +706,7 @@ type MaybeName = Maybe<string>;
 //   ^? string | null | undefined
 ```
 
-#### `Prettify<T>`
+### `Prettify<T>`
 
 Flattens intersections and mapped types into a cleaner displayed shape.
 
@@ -671,7 +716,7 @@ type User = Prettify<Raw>;
 //   ^? { id: string; name: string }
 ```
 
-#### `Satisfies<T, Base>`
+### `Satisfies<T, Base>`
 
 Constrains `T` to be assignable to `Base` while preserving `T`'s full detail.
 
@@ -683,7 +728,7 @@ type Endpoint = Satisfies<
 //   ^? { method: "GET"; path: "/users" }
 ```
 
-#### `NonNullableValues<T>`
+### `NonNullableValues<T>`
 
 Removes `null` and `undefined` from each property value type.
 
@@ -693,7 +738,7 @@ type Output = NonNullableValues<Input>;
 //   ^? { id: string; age?: number }
 ```
 
-#### `SomeRequired<T, K>`
+### `SomeRequired<T, K>`
 
 Makes a subset of keys required while leaving all other keys unchanged.
 
@@ -703,7 +748,7 @@ type Output = SomeRequired<Input, "id">;
 //   ^? { id: string; name?: string; active?: boolean }
 ```
 
-#### `SomeOptional<T, K>`
+### `SomeOptional<T, K>`
 
 Makes a subset of keys optional while leaving all other keys unchanged.
 
@@ -713,7 +758,7 @@ type Output = SomeOptional<Input, "active">;
 //   ^? { id: string; name: string; active?: boolean }
 ```
 
-#### `TupleOf<T, N>`
+### `TupleOf<T, N>`
 
 Builds a fixed-length tuple of `N` elements of type `T`.
 
@@ -722,7 +767,7 @@ type Triple = TupleOf<number, 3>;
 //   ^? [number, number, number]
 ```
 
-#### `Widen<T>`
+### `Widen<T>`
 
 Widens literals to their broader primitive types.
 
@@ -733,7 +778,7 @@ type B = Widen<42>;
 //   ^? number
 ```
 
-#### `UnknownRecord`
+### `UnknownRecord`
 
 Alias for a generic object map with unknown values.
 
@@ -744,7 +789,7 @@ type Payload = UnknownRecord;
 
 ## Development
 
-### Setup
+## Setup
 
 Prerequisites:
 
@@ -756,7 +801,7 @@ nvm use
 pnpm install
 ```
 
-### Scripts
+## Scripts
 
 ```bash
 pnpm check          # run all static checks

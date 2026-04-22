@@ -32,6 +32,10 @@
       "types": "./dist/error.d.ts",
       "import": "./dist/error.js"
     },
+    "./format": {
+      "types": "./dist/format.d.ts",
+      "import": "./dist/format.js"
+    },
     "./function": {
       "types": "./dist/function.d.ts",
       "import": "./dist/function.js"
@@ -67,6 +71,7 @@
     "check:types": "tsc --noEmit",
     "check:lint": "eslint . --ext .ts",
     "check:format": "prettier --check .",
+    "fix": "pnpm fix:lint && pnpm fix:format",
     "fix:lint": "eslint . --ext .ts --fix",
     "fix:format": "prettier --write .",
     "test": "vitest run",
