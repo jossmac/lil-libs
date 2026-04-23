@@ -201,6 +201,13 @@ import { UNICODE_CHARS } from "@jossmac/lil-libs/constants";
 
 Common unicode characters used to compose UI text content. Use when you need explicit control over spacing and line-break behavior in UI copy.
 
+```ts
+`${10}${UNICODE_CHARS.narrowNoBreakSpace}kg`; // "10 kg"
+`Page${UNICODE_CHARS.noBreakSpace}1`; // stays on one line
+`USD${UNICODE_CHARS.wordJoiner}/${UNICODE_CHARS.wordJoiner}EUR`; // keeps the token together
+`super${UNICODE_CHARS.zeroWidthSpace}long`; // invisible optional wrap point
+```
+
 #### `narrowNoBreakSpace`
 
 A narrow form of a no-break space, typically the width of a thin or mid space. Use when two tokens should stay together with tighter spacing than a normal space (for example number-unit pairs or compact punctuation spacing).
@@ -357,10 +364,11 @@ import { relativeTime } from "@jossmac/lil-libs/datetime";
 
 ### `relativeTime`
 
-Formats a date as relative time for recent values and falls back to a date string for older values.
+Formats a date as relative time for nearby past or future values and falls back to a date string once the value is 24 hours away or more.
 
 ```ts
 relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
+relativeTime(new Date(Date.now() + 1_000 * 60 * 5)); // "in 5 minutes"
 relativeTime(new Date(Date.now() - 1_000), { numeric: "auto" }); // "Just now"
 relativeTime(new Date(Date.now() - 1_000 * 60), { style: "short" }); // "1 min. ago"
 
@@ -387,8 +395,11 @@ function relativeTime(
 **Behaviour:**
 
 - Accepts a `Date` or [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) string.
-- Returns relative output (e.g. `"1 minute ago"`) for values within 24 hours.
+- Returns relative output (e.g. `"1 minute ago"` or `"in 5 minutes"`) for past and future values within 24 hours.
 - Returns a localized date string once the value is 24 hours old or more.
+- Uses the same 24-hour cutoff for future dates; after that it falls back to a date string.
+- With `numeric: "auto"`, values within 10 seconds return `"Just now"`.
+- Throws a `TypeError` for invalid date input.
 - Supports relative formatting via `numeric` and `style` options.
 - Supports custom date formatting via `Intl.DateTimeFormat` options.
 
@@ -576,19 +587,22 @@ Converts object keys to HTML `data-*` attributes.
 toDataAttributes({
   isSelected: true,
   panelIndex: 2,
+  count: 0,
   empty: "",
 });
 // {
 //   "data-selected": true,
 //   "data-panel-index": 2,
+//   "data-count": 0,
 // }
 
 toDataAttributes(
-  { isSelected: true, empty: "" },
+  { isSelected: true, isolated: true, empty: "" },
   { omitFalsyValues: false, trimBooleanKeys: false },
 );
 // {
 //   "data-is-selected": true,
+//   "data-isolated": true,
 //   "data-empty": "",
 // }
 ```
@@ -598,8 +612,9 @@ toDataAttributes(
 - Converts camelCase keys to kebab-case.
 - Omits `null` and `undefined` values.
 - Omits `false` and `""` by default.
-- Preserves `0` values.
+- Preserves `0` values, even when `omitFalsyValues` is `true`.
 - Trims leading `is` from boolean-style keys by default.
+- Only trims leading `is` when it is followed by an uppercase letter (`isSelected` -> `data-selected`, `isolated` -> `data-isolated`).
 
 ### `getAbsoluteClientRect`
 
@@ -786,6 +801,17 @@ roundToPrecision(3.14159, 2); // 3.14
 roundToPrecision(3.005, 2); // 3.01
 ```
 
+**Signature:**
+
+```ts
+function roundToPrecision(value: number, digits: number, base?: number): number;
+```
+
+**Behaviour:**
+
+- `digits <= 0` behaves like `Math.round()`.
+- `base` defaults to `10`; most callers should leave it unchanged.
+
 ### `roundToStep`
 
 Rounds a number to the nearest step interval.
@@ -794,6 +820,11 @@ Rounds a number to the nearest step interval.
 roundToStep(5.26, 0.25); // 5.25
 roundToStep(-5.26, 0.25); // -5.25
 ```
+
+**Behaviour:**
+
+- Throws for `step = 0`.
+- Throws for non-finite step values like `Infinity` and `NaN`.
 
 ### `findNearest`
 
@@ -812,6 +843,7 @@ findNearest(4, items, "larger"); // 5
 
 - `"first"` / `"last"` — prefer the item that appears earlier or later in the array.
 - `"smaller"` / `"larger"` — prefer the numerically smaller or larger tied value.
+- Throws if `items` is empty.
 
 ### `sequence`
 
@@ -1092,8 +1124,21 @@ Case-insensitive and diacritic-insensitive substring matching.
 ```ts
 contains("café", "cafe"); // true
 contains("Hello World", "world"); // true
+contains("hello", ""); // true
 contains("hello", "bye"); // false
 ```
+
+**Signature:**
+
+```ts
+function contains(string: string, substring: string, locale?: string): boolean;
+```
+
+**Behaviour:**
+
+- Uses `Intl.Collator` with accent-insensitive and case-insensitive matching.
+- Accepts an optional `locale`, which defaults to `"en"`.
+- Returns `true` for an empty substring.
 
 ### `pluralize`
 
@@ -1112,6 +1157,8 @@ Returns initials for names with Unicode-aware grapheme support.
 
 ```ts
 formatInitials("John Doe"); // "JD"
+formatInitials("John Henry Doe"); // "JD"
+formatInitials("John Henry Doe", { maxLetters: 3 }); // "JHD"
 formatInitials("John Ronald Reuel Tolkien"); // "JT"
 formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
 formatInitials("Élodie Durand"); // "ÉD"
@@ -1134,8 +1181,8 @@ function formatInitials(
 **Behaviour:**
 
 - Defaults to `maxLetters = 2`.
-- Uses first + last word initials for multi-word names when `maxLetters === 2`.
-- Uses the first letter from each word (left to right) when `maxLetters >= 3`.
+- Uses the first letter from the first word and the first letter from the last word when `maxLetters === 2`.
+- Uses up to one letter from each word, left to right, when `maxLetters >= 3`.
 - For single-word names, uses the first `maxLetters` letters.
 - Returns `"?"` for empty or whitespace-only input.
 - Throws when `maxLetters` is not finite or is less than `1`.
@@ -1153,7 +1200,7 @@ import type {
   TupleOf,
   UnknownRecord,
   Widen,
-} from "@jossmac/lil-libs/string";
+} from "@jossmac/lil-libs/types";
 ```
 
 ### `Maybe<T>`

@@ -28,6 +28,10 @@
       "types": "./dist/console.d.ts",
       "import": "./dist/console.js"
     },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js"
+    },
     "./datetime": {
       "types": "./dist/datetime.d.ts",
       "import": "./dist/datetime.js"
