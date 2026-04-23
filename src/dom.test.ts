@@ -11,6 +11,7 @@ import {
 } from "vitest";
 
 import {
+  ariaCurrent,
   atScrollBottom,
   atScrollLeft,
   atScrollRight,
@@ -24,6 +25,7 @@ import {
   isKeyboardInput,
   isTouchCapable,
   isTouchDevice,
+  joinIds,
   nearestComputedStyle,
   querySelector,
   querySelectorAll,
@@ -180,6 +182,64 @@ describe("utils/dom", () => {
         "data-is-selected": true,
         "data-isolated": true,
       });
+    });
+  });
+
+  describe("ariaCurrent", () => {
+    it('returns "page" when pathname matches href exactly', () => {
+      expect(ariaCurrent("/about", "/about")).toBe("page");
+      expect(ariaCurrent("/products", "/products")).toBe("page");
+    });
+
+    it('returns "true" when pathname is a child of href', () => {
+      expect(ariaCurrent("/about/team", "/about")).toBe("true");
+      expect(ariaCurrent("/products/featured/123", "/products")).toBe("true");
+      expect(ariaCurrent("/docs/api/getting-started", "/docs")).toBe("true");
+    });
+
+    it('returns "false" when pathname does not match href', () => {
+      expect(ariaCurrent("/about", "/contact")).toBe("false");
+      expect(ariaCurrent("/products", "/services")).toBe("false");
+      expect(ariaCurrent(null, "/about")).toBe("false");
+    });
+
+    it("handles substrings correctly", () => {
+      expect(ariaCurrent("/about-us", "/about")).toBe("false");
+      expect(ariaCurrent("/dashboard", "/dash")).toBe("false");
+    });
+    it("handles root path correctly", () => {
+      expect(ariaCurrent("/about", "/")).toBe("false");
+      expect(ariaCurrent("/", "/")).toBe("page");
+    });
+    it("handles trailing slashes consistently", () => {
+      expect(ariaCurrent("/about/", "/about")).toBe("page");
+      expect(ariaCurrent("/about", "/about/")).toBe("page");
+      expect(ariaCurrent("/about/foo", "/about/")).toBe("true");
+      expect(ariaCurrent("/about/", "/about/foo")).toBe("false");
+    });
+  });
+
+  describe("joinIds", () => {
+    it("joins multiple valid IDs with spaces", () => {
+      expect(joinIds("foo", "bar", "baz")).toBe("foo bar baz");
+    });
+    it("handles single ID correctly", () => {
+      expect(joinIds("singleId")).toBe("singleId");
+    });
+    it("filters out falsy values", () => {
+      expect(joinIds("foo", null, "bar", undefined, "", "baz", false)).toBe(
+        "foo bar baz",
+      );
+    });
+
+    it("returns undefined when no IDs are provided", () => {
+      expect(joinIds()).toBeUndefined();
+    });
+    it("returns undefined when args is empty", () => {
+      expect(joinIds(...[])).toBeUndefined();
+    });
+    it("returns undefined when all values are falsy", () => {
+      expect(joinIds(null, undefined, "", false)).toBeUndefined();
     });
   });
 

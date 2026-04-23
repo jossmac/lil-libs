@@ -227,6 +227,65 @@ export function toDataAttributes<T extends object>(
   return dataAttributes;
 }
 
+/**
+ * Returns the aria-current value for a given pathname and href.
+ *
+ * @see https://www.w3.org/TR/wai-aria-1.2/#aria-current
+ *
+ * @example
+ * ariaCurrent('/about', '/about') // 'page'
+ * ariaCurrent('/about/team', '/about') // 'true'
+ * ariaCurrent('/contact', '/about') // 'false'
+ *
+ * @param pathname - The current pathname.
+ * @param href - The item's href.
+ * @returns 'page' if the pathname exactly matches the href, 'true' if the pathname is a child of the href, and 'false' otherwise.
+ */
+export function ariaCurrent(pathname: string | null, href: string) {
+  if (!pathname) return "false";
+
+  const normalizedPathname = normalizePath(pathname);
+  const normalizedHref = normalizePath(href);
+
+  // only exact matches receive "page"
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-current
+  if (normalizedPathname === normalizedHref) return "page";
+
+  // pathname is a child of href
+  if (href !== "/" && normalizedPathname.startsWith(normalizedHref)) {
+    // avoid substring matches
+    const nextChar = normalizedPathname.charAt(normalizedHref.length);
+    if (nextChar === "/" || nextChar === "") {
+      return "true";
+    }
+  }
+
+  return "false";
+}
+
+/** Remove trailing slashes, except for root. */
+function normalizePath(path: string) {
+  return path === "/" ? path : path.replace(/\/$/, "");
+}
+
+/**
+ * Thin wrapper around `join()` that filters out “falsy” values and returns
+ * `undefined` if the result is empty.
+ */
+export function joinIds(...ids: (string | undefined | null | false)[]) {
+  // cheap length check before filtering
+  if (!ids || ids.length === 0) {
+    return undefined;
+  }
+
+  const filteredIds = ids.filter(Boolean);
+  if (filteredIds.length === 0) {
+    return undefined;
+  }
+
+  return filteredIds.join(" ");
+}
+
 // Scroll ----------------------------------------------------------------------
 
 /**
