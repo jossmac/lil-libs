@@ -326,17 +326,6 @@ import { relativeTime } from "@jossmac/lil-libs/datetime";
 Formats a date as relative time for recent values and falls back to a date string for older values.
 
 ```ts
-function relativeTime(
-  value: Date | string,
-  relativeOptions?: {
-    numeric?: Intl.RelativeTimeFormatNumeric;
-    style?: Intl.RelativeTimeFormatStyle;
-  },
-  dateOptions?: Intl.DateTimeFormatOptions,
-): string;
-```
-
-```ts
 relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
 relativeTime(new Date(Date.now() - 1_000), { numeric: "auto" }); // "Just now"
 relativeTime(new Date(Date.now() - 1_000 * 60), { style: "short" }); // "1 min. ago"
@@ -348,6 +337,19 @@ relativeTime(
 ); // "Jan 6, 2026" (locale-dependent)
 ```
 
+**Signature:**
+
+```ts
+function relativeTime(
+  value: Date | string,
+  relativeOptions?: {
+    numeric?: Intl.RelativeTimeFormatNumeric;
+    style?: Intl.RelativeTimeFormatStyle;
+  },
+  dateOptions?: Intl.DateTimeFormatOptions,
+): string;
+```
+
 **Behaviour:**
 
 - Accepts a `Date` or [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) string.
@@ -355,6 +357,248 @@ relativeTime(
 - Returns a localized date string once the value is 24 hours old or more.
 - Supports relative formatting via `numeric` and `style` options.
 - Supports custom date formatting via `Intl.DateTimeFormat` options.
+
+## DOM
+
+```ts
+import {
+  atScrollBottom,
+  atScrollLeft,
+  atScrollRight,
+  atScrollTop,
+  getAbsoluteClientRect,
+  getComputedStyle,
+  getDisplayMode,
+  hasScrollX,
+  hasScrollY,
+  isHtmlElement,
+  isKeyboardInput,
+  isTouchCapable,
+  isTouchDevice,
+  nearestComputedStyle,
+  querySelector,
+  querySelectorAll,
+  toDataAttributes,
+} from "@jossmac/lil-libs/dom";
+```
+
+### `isHtmlElement`
+
+Type guard for narrowing unknown values to `HTMLElement`.
+
+```ts
+const el = document.querySelector("#app");
+//    ^? Element | null
+
+if (isHtmlElement(el)) {
+  el.tabIndex = -1; // safe to operate on `el` as an `HTMLElement` type
+}
+```
+
+### `isKeyboardInput`
+
+Checks whether an event target is an element that can trigger the software keyboard, on mobile devices.
+
+```ts
+const textInput = document.createElement("input");
+textInput.type = "text";
+
+const checkbox = document.createElement("input");
+checkbox.type = "checkbox";
+
+isKeyboardInput(textInput); // true
+isKeyboardInput(checkbox); // false
+isKeyboardInput(document.createElement("textarea")); // true
+```
+
+### `isTouchCapable`
+
+Returns `true` when the device can receive touch input.
+
+Some devices support both touch and mouse input, such as laptop computers with a touchscreen.
+
+```ts
+isTouchCapable(); // true on touch-capable devices, otherwise false
+```
+
+### `isTouchDevice`
+
+Returns `true` when the primary pointer is "coarse" (for example, touch input).
+
+```ts
+isTouchDevice(); // true on coarse-pointer devices, otherwise false
+```
+
+### `querySelector`
+
+Thin wrapper around the `Element.querySelector()` method, which qualifies the returned value as an HTMLElement.
+
+```ts
+const container = document.createElement("div");
+container.innerHTML = "<button>Save</button><svg><circle /></svg>";
+
+querySelector(container, "button"); // HTMLButtonElement
+querySelector(container, "circle"); // null (non-HTMLElement)
+querySelector(null, "button"); // null
+```
+
+### `querySelectorAll`
+
+Thin wrapper around the `Element.querySelectorAll()` method, which returns `HTMLElement[]` instead of `NodeListOf<Element>`.
+
+```ts
+const container = document.createElement("div");
+container.innerHTML = "<span>One</span><span>Two</span><svg><circle /></svg>";
+
+querySelectorAll(container, "span"); // [HTMLSpanElement, HTMLSpanElement]
+querySelectorAll(container, "span, circle"); // spans only
+querySelectorAll(undefined, "span"); // []
+```
+
+### `getComputedStyle`
+
+Returns a computed style value for regular CSS properties and CSS variables.
+
+```ts
+const el = document.createElement("div");
+
+getComputedStyle(el, "color"); // e.g. "rgb(0, 0, 0)"
+getComputedStyle(el, "line-height"); // e.g. "normal"
+getComputedStyle(el, "--space-10"); // custom property value
+```
+
+### `nearestComputedStyle`
+
+Walks up the parent chain until it finds a non-empty computed style value.
+
+```ts
+const parent = document.createElement("div");
+const child = document.createElement("span");
+parent.appendChild(child);
+
+nearestComputedStyle(child, "color");
+// value from child if present, otherwise nearest parent value
+```
+
+### `getDisplayMode`
+
+Returns the current display mode for browser and PWA contexts.
+
+Possible values:
+
+- `"fullscreen"`
+- `"minimal-ui"`
+- `"picture-in-picture"`
+- `"standalone"`
+- `"window-controls-overlay"`
+- `"browser"`
+
+```ts
+getDisplayMode();
+// e.g. "browser" in a tab, "standalone" in an installed PWA
+```
+
+### `toDataAttributes`
+
+Converts object keys to HTML `data-*` attributes.
+
+```ts
+toDataAttributes({
+  isSelected: true,
+  panelIndex: 2,
+  empty: "",
+});
+// {
+//   "data-selected": true,
+//   "data-panel-index": 2,
+// }
+
+toDataAttributes(
+  { isSelected: true, empty: "" },
+  { omitFalsyValues: false, trimBooleanKeys: false },
+);
+// {
+//   "data-is-selected": true,
+//   "data-empty": "",
+// }
+```
+
+**Behaviour:**
+
+- Converts camelCase keys to kebab-case.
+- Omits `null` and `undefined` values.
+- Omits `false` and `""` by default.
+- Preserves `0` values.
+- Trims leading `is` from boolean-style keys by default.
+
+### `getAbsoluteClientRect`
+
+Returns `getBoundingClientRect()` values offset by document scroll, giving absolute page coordinates.
+
+```ts
+const rect = getAbsoluteClientRect(document.body);
+
+rect.top;
+rect.left;
+rect.width;
+rect.height;
+```
+
+### `hasScrollX`
+
+Checks whether an element has horizontal overflow.
+
+```ts
+hasScrollX(document.body); // true or false
+```
+
+### `hasScrollY`
+
+Checks whether an element has vertical overflow.
+
+```ts
+hasScrollY(document.body); // true or false
+```
+
+### `atScrollTop`
+
+Checks whether an element is at the top of its scroll range.
+
+Uses `<= 0` to handle elastic scrolling behavior.
+
+```ts
+atScrollTop(document.documentElement); // true or false
+```
+
+### `atScrollBottom`
+
+Checks whether an element is at the bottom of its scroll range.
+
+Uses `>=` to handle elastic scrolling behavior.
+
+```ts
+atScrollBottom(document.documentElement); // true or false
+```
+
+### `atScrollLeft`
+
+Checks whether an element is at the left edge of its scroll range.
+
+Uses `<= 0` to handle elastic scrolling behavior.
+
+```ts
+atScrollLeft(document.documentElement); // true or false
+```
+
+### `atScrollRight`
+
+Checks whether an element is at the right edge of its scroll range.
+
+Uses `>=` to handle elastic scrolling behavior.
+
+```ts
+atScrollRight(document.documentElement); // true or false
+```
 
 ## JSON
 
@@ -765,6 +1009,12 @@ base64Encode("hello", "text/plain");
 // "data:text/plain;base64,aGVsbG8="
 ```
 
+**Behaviour:**
+
+- Supports Unicode input.
+- Preserves MIME type in data URI output.
+- Optimises SVG payload whitespace when `mimeType` is `"image/svg+xml"`.
+
 ### `contains`
 
 Case-insensitive and diacritic-insensitive substring matching.
@@ -791,6 +1041,17 @@ pluralize(2, ["person", "people"], false); // "people"
 Returns initials for names with Unicode-aware grapheme support.
 
 ```ts
+formatInitials("John Doe"); // "JD"
+formatInitials("John Ronald Reuel Tolkien"); // "JT"
+formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
+formatInitials("Élodie Durand"); // "ÉD"
+formatInitials("ilker", { locale: "tr" }); // "İL"
+formatInitials("李小龍"); // "李小"
+```
+
+**Signature:**
+
+```ts
 function formatInitials(
   name: string,
   options?: {
@@ -798,15 +1059,6 @@ function formatInitials(
     locale?: string;
   },
 ): string;
-```
-
-```ts
-formatInitials("John Doe"); // "JD"
-formatInitials("John Ronald Reuel Tolkien"); // "JT"
-formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
-formatInitials("Élodie Durand"); // "ÉD"
-formatInitials("ilker", { locale: "tr" }); // "İL"
-formatInitials("李小龍"); // "李小"
 ```
 
 **Behaviour:**
@@ -817,12 +1069,6 @@ formatInitials("李小龍"); // "李小"
 - For single-word names, uses the first `maxLetters` letters.
 - Returns `"?"` for empty or whitespace-only input.
 - Throws when `maxLetters` is not finite or is less than `1`.
-
-**Behaviour:**
-
-- Supports Unicode input.
-- Preserves MIME type in data URI output.
-- Optimises SVG payload whitespace when `mimeType` is `"image/svg+xml"`.
 
 ## Types
 
