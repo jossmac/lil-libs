@@ -191,6 +191,40 @@ warnOnce("Using fallback value");
 warnOnce("Using fallback value"); // ignored
 ```
 
+## Constants
+
+```ts
+import { UNICODE_CHARS } from "@jossmac/lil-libs/constants";
+```
+
+### `UNICODE_CHARS`
+
+Common unicode characters used to compose UI text content. Use when you need explicit control over spacing and line-break behavior in UI copy.
+
+#### `narrowNoBreakSpace`
+
+A narrow form of a no-break space, typically the width of a thin or mid space. Use when two tokens should stay together with tighter spacing than a normal space (for example number-unit pairs or compact punctuation spacing).
+
+- [U+202F](https://unicode-explorer.com/c/202F)
+
+#### `noBreakSpace`
+
+A space character that prevents an automatic line break at its position. Use when two adjacent words or symbols must remain on the same line while keeping normal space width.
+
+- [U+00A0](https://unicode-explorer.com/c/00A0)
+
+#### `wordJoiner`
+
+A non-breaking form of the zero-width space. Use when you must prevent a line break between characters without introducing any visible spacing.
+
+- [U+2060](https://unicode-explorer.com/c/2060)
+
+#### `zeroWidthSpace`
+
+Intended for invisible word separation and for line-break control; it has no width. Use when you want to add optional wrap points in long unbroken text without adding visible spaces.
+
+- [U+200B](https://unicode-explorer.com/c/200B)
+
 ## Error
 
 ```ts
@@ -1214,7 +1248,7 @@ type Payload = UnknownRecord;
 
 ## Development
 
-## Setup
+### Setup
 
 Prerequisites:
 
@@ -1226,7 +1260,7 @@ nvm use
 pnpm install
 ```
 
-## Scripts
+### Scripts
 
 ```bash
 pnpm check          # run all static checks

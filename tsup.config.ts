@@ -5,6 +5,7 @@ export default defineConfig({
     "src/array.ts",
     "src/assert.ts",
     "src/console.ts",
+    "src/constants.ts",
     "src/datetime.ts",
     "src/dom.ts",
     "src/error.ts",
