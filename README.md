@@ -1208,3 +1208,9 @@ pnpm release major  # bump major, create tag, push commit + tag
 
 pnpm release patch -- --no-push  # keep release commit + tag local
 ```
+
+When ready:
+
+```sh
+pnpm publish --access public
+```
