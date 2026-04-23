@@ -1,3 +1,5 @@
+import { isFiniteNumber } from "./number";
+
 /**
  * Guard to check if a value is a string.
  */
@@ -189,3 +191,79 @@ function utf8ToBase64(value: string): string {
 // prettier-ignore
 type KnownMimeType = 'text/plain' | 'image/svg+xml' | 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp' | 'image/avif';
 type MimeType = KnownMimeType | (string & {});
+
+type InitialsOptions = {
+  /**
+   * The maximum number of letters to return.
+   * @default 2
+   */
+  maxLetters?: number;
+  /**
+   * The locale to use for the initials.
+   * @default undefined (system locale)
+   */
+  locale?: string;
+};
+
+/**
+ * Returns the appropriate initials for a name.
+ *
+ * @example
+ * formatInitials('John') // "JO"
+ * formatInitials('John Ronald Reuel Tolkien') // "JT"
+ * formatInitials('John Ronald Reuel Tolkien', { maxLetters: 3 }) // "JRR"
+ * formatInitials('Élodie Durand') // "ÉD"
+ */
+export function formatInitials(name: string, options: InitialsOptions = {}) {
+  const { maxLetters = 2, locale } = options;
+
+  if (!isFiniteNumber(maxLetters) || maxLetters < 1) {
+    throw new TypeError(
+      "maxLetters must be a finite number greater than or equal to 1.",
+    );
+  }
+
+  name = name.trim();
+
+  if (!name) return "?";
+
+  const cleaned = name.replace(/\s+/gu, " ");
+  const words = cleaned.split(/\s+/u).filter(Boolean);
+
+  const segmenter =
+    typeof Intl !== "undefined" && "Segmenter" in Intl
+      ? new Intl.Segmenter(locale, { granularity: "grapheme" })
+      : null;
+
+  const getGraphemes = (value: string): string[] => {
+    if (!segmenter) return Array.from(value); // fallback
+    return Array.from(segmenter.segment(value), (s) => s.segment);
+  };
+
+  const toUpper = (value: string) =>
+    locale ? value.toLocaleUpperCase(locale) : value.toUpperCase();
+
+  // single word: grab the first N letters
+  // "John" -> "JO"
+  if (words.length === 1) {
+    const graphemes = getGraphemes(words[0] ?? "");
+    return toUpper(graphemes.slice(0, maxLetters).join(""));
+  }
+
+  // max 2: use first and last words
+  // "John Henry Doe" -> "JD"
+  if (maxLetters === 2) {
+    const first = getGraphemes(words[0] ?? "")[0] ?? "";
+    const last = getGraphemes(words[words.length - 1] ?? "")[0] ?? "";
+    return toUpper((first + last).slice(0, maxLetters));
+  }
+
+  // max 3+: first letter of each word, from first to last
+  // "John Henry Doe" -> "JHD"
+  return Array.from({ length: maxLetters })
+    .map((_, index) => {
+      const graphemes = getGraphemes(words[index] ?? "");
+      return toUpper(graphemes[0] ?? "");
+    })
+    .join("");
+}

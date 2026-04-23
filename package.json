@@ -28,13 +28,13 @@
       "types": "./dist/console.d.ts",
       "import": "./dist/console.js"
     },
+    "./datetime": {
+      "types": "./dist/datetime.d.ts",
+      "import": "./dist/datetime.js"
+    },
     "./error": {
       "types": "./dist/error.d.ts",
       "import": "./dist/error.js"
-    },
-    "./format": {
-      "types": "./dist/format.d.ts",
-      "import": "./dist/format.js"
     },
     "./function": {
       "types": "./dist/function.d.ts",

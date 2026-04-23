@@ -4,16 +4,27 @@ A small collection of TypeScript-first utilities for everyday application code. 
 
 ## Array
 
-### `isPopulatedArray`
+```ts
+import {
+  chunk,
+  isIterable,
+  isLength,
+  isPopulatedArray,
+  partition,
+  stableKeyFactory,
+  toArray,
+} from "@jossmac/lil-libs/array";
+```
 
-Type guard for narrowing an array to a non-empty tuple-like type.
+### `isIterable`
+
+Type guard that checks whether a value implements the iterable protocol.
 
 ```ts
-const values: number[] = [1, 2, 3];
-
-if (isPopulatedArray(values)) {
-  // values: [number, ...number[]]
-}
+isIterable(new Map()); // true
+isIterable(new Set()); // true
+isIterable([]); // true
+isIterable({}); // false
 ```
 
 ### `isLength`
@@ -28,6 +39,18 @@ if (isLength(values, 3)) {
 }
 ```
 
+### `isPopulatedArray`
+
+Type guard for narrowing an array to a non-empty tuple-like type.
+
+```ts
+const values: number[] = [1, 2, 3];
+
+if (isPopulatedArray(values)) {
+  // values: [number, ...number[]]
+}
+```
+
 ### `toArray`
 
 Returns an array for nullish, scalar, iterable, or array input.
@@ -36,17 +59,6 @@ Returns an array for nullish, scalar, iterable, or array input.
 toArray(null); // []
 toArray(1); // [1]
 toArray(new Set([1, 2])); // [1, 2]
-```
-
-### `isIterable`
-
-Type guard that checks whether a value implements the iterable protocol.
-
-```ts
-isIterable(new Map()); // true
-isIterable(new Set()); // true
-isIterable([]); // true
-isIterable({}); // false
 ```
 
 ### `chunk`
@@ -65,12 +77,6 @@ chunk([], 2); // []
 
 Splits an array into two arrays using a predicate.
 
-Behaviour:
-
-- Returns a 2-item tuple: `[matched, unmatched]`.
-- Preserves the original item order within both output arrays.
-- Passes `(item, index, array)` to the predicate.
-
 ```ts
 partition([1, 2, 3, 4], (n) => n % 2 === 0);
 // [[2, 4], [1, 3]]
@@ -79,16 +85,15 @@ partition(["a", "bb", "ccc"], (s) => s.length > 1);
 // [["bb", "ccc"], ["a"]]
 ```
 
+**Behaviour:**
+
+- Returns a 2-item tuple: `[matched, unmatched]`.
+- Preserves the original item order within both output arrays.
+- Passes `(item, index, array)` to the predicate.
+
 ### `stableKeyFactory`
 
 Creates a function that deterministically maps a string to one of the provided keys using a stable hash.
-
-Behaviour:
-
-- Returns the same key for the same input every time.
-- Preserves literal key types (for `as const` arrays).
-- Supports empty input strings.
-- Throws if called with an empty keys array.
 
 ```ts
 const colors = ["red", "green", "blue"] as const;
@@ -102,33 +107,39 @@ const color = getColor("David");
 //    ^? 'red' | 'green' | 'blue' (inferred return type)
 ```
 
+**Behaviour:**
+
+- Returns the same key for the same input every time.
+- Preserves literal key types (for `as const` arrays).
+- Supports empty input strings.
+- Throws if called with an empty keys array.
+
 ## Assert
+
+```ts
+import { assert, assertNever, ensure } from "@jossmac/lil-libs/assert";
+```
 
 ### `assert`
 
 Asserts that a value is present (or that a boolean is `true`).
 
-Behaviour:
+```ts
+function getName(id: number): string | undefined;
+
+const maybeName = getName(123);
+//    ^? string | undefined
+
+assert(maybeName, "Name is required");
+const name = maybeName;
+//    ^? string
+```
+
+**Behaviour:**
 
 - Throws for `false`, `null`, and `undefined`.
 - Does not throw for other falsy values like `0` and `""`.
 - Narrows types after the assertion.
-
-```ts
-const maybeName: string | undefined = getName();
-assert(maybeName, "Name is required");
-// maybeName is now string
-```
-
-### `ensure`
-
-Returns the validated value, or throws if assertion fails.
-
-```ts
-const maybeUser: User | null = findUser();
-const user = ensure(maybeUser, "User is required");
-// user is User
-```
 
 ### `assertNever`
 
@@ -141,11 +152,26 @@ switch (status.kind) {
   case "done":
     break;
   default:
-    assertNever(status);
+    assertNever(status.kind);
 }
 ```
 
+### `ensure`
+
+A convenience wrapper around `assert` that returns the value if the assertion passes.
+
+```ts
+function findUser(id: number): User | null;
+
+const user = ensure(findUser(123), "User is required");
+//    ^? User
+```
+
 ## Console
+
+```ts
+import { errorOnce, warnOnce } from "@jossmac/lil-libs/console";
+```
 
 ### `errorOnce`
 
@@ -166,6 +192,15 @@ warnOnce("Using fallback value"); // ignored
 ```
 
 ## Error
+
+```ts
+import {
+  ensureError,
+  isError,
+  isErrorLike,
+  parseError,
+} from "@jossmac/lil-libs/error";
+```
 
 ### `isError`
 
@@ -189,13 +224,6 @@ isErrorLike({ message: 123 }); // false
 
 Returns a human-readable error message from unknown input.
 
-Behaviour:
-
-- Returns `error.message` for native `Error` values.
-- Returns `value.message` for error-like objects where `message` is a string.
-- Returns string inputs as-is.
-- Returns a fallback message for all other values.
-
 ```ts
 parseError(new Error("Boom")); // "Boom"
 parseError("Something went wrong"); // "Something went wrong"
@@ -205,6 +233,13 @@ parseError(null); // "An unknown error occurred."
 parseError({ message: 123 }); // "An unknown error occurred."
 parseError(null, "Custom fallback"); // "Custom fallback"
 ```
+
+**Behaviour:**
+
+- Returns `error.message` for native `Error` values.
+- Returns `value.message` for error-like objects where `message` is a string.
+- Returns string inputs as-is.
+- Returns a fallback message for all other values.
 
 ### `ensureError`
 
@@ -217,6 +252,16 @@ ensureError({ message: "boom", name: "CustomError" }); // Error with copied meta
 ```
 
 ## Function
+
+```ts
+import {
+  isDefined,
+  lazy,
+  noop,
+  not,
+  resolveMaybeFn,
+} from "@jossmac/lil-libs/function";
+```
 
 ### `noop`
 
@@ -231,7 +276,10 @@ button.addEventListener("click", noop);
 Type guard for filtering out `null` and `undefined` without losing type precision.
 
 ```ts
-const ids = [1, null, 2, undefined, 3].filter(isDefined);
+const bad = [1, null, 2, undefined, 3].filter(Boolean);
+//    ^? (number | null | undefined)[]
+
+const good = [1, null, 2, undefined, 3].filter(isDefined);
 //    ^? number[]
 ```
 
@@ -267,40 +315,26 @@ settings.value; // computes once
 settings.value; // cached
 ```
 
-## Format
-
-### `formatInitials`
-
-Returns initials for names with Unicode-aware grapheme support.
-
-Behaviour:
-
-- Defaults to `maxLetters = 2`.
-- Uses first + last word initials for multi-word names when `maxLetters === 2`.
-- Uses the first letter from each word (left to right) when `maxLetters >= 3`.
-- For single-word names, uses the first `maxLetters` letters.
-- Returns `"?"` for empty or whitespace-only input.
-- Throws when `maxLetters` is not finite or is less than `1`.
+## Datetime
 
 ```ts
-formatInitials("John Doe"); // "JD"
-formatInitials("John Ronald Reuel Tolkien"); // "JT"
-formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
-formatInitials("ilker", { locale: "tr" }); // "İL"
-formatInitials("李小龍"); // "李小"
+import { relativeTime } from "@jossmac/lil-libs/datetime";
 ```
 
 ### `relativeTime`
 
 Formats a date as relative time for recent values and falls back to a date string for older values.
 
-Behaviour:
-
-- Accepts a `Date` or ISO 8601 string.
-- Returns relative output (e.g. `"1 minute ago"`) for values within 24 hours.
-- Returns a localized date string once the value is 24 hours old or more.
-- Supports relative formatting via `numeric` and `style` options.
-- Supports custom date formatting via `Intl.DateTimeFormat` options.
+```ts
+function relativeTime(
+  value: Date | string,
+  relativeOptions?: {
+    numeric?: Intl.RelativeTimeFormatNumeric;
+    style?: Intl.RelativeTimeFormatStyle;
+  },
+  dateOptions?: Intl.DateTimeFormatOptions,
+): string;
+```
 
 ```ts
 relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
@@ -314,13 +348,31 @@ relativeTime(
 ); // "Jan 6, 2026" (locale-dependent)
 ```
 
+**Behaviour:**
+
+- Accepts a `Date` or [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) string.
+- Returns relative output (e.g. `"1 minute ago"`) for values within 24 hours.
+- Returns a localized date string once the value is 24 hours old or more.
+- Supports relative formatting via `numeric` and `style` options.
+- Supports custom date formatting via `Intl.DateTimeFormat` options.
+
 ## JSON
+
+```ts
+import {
+  stringifyWithBigIntAsString,
+  stringifyWithSortedKeys,
+} from "@jossmac/lil-libs/json";
+```
 
 ### `stringifyWithBigIntAsString`
 
 Serialises JSON while converting `BigInt` values to strings.
 
 ```ts
+JSON.stringify({ id: 123n });
+// ⚠ Uncaught TypeError: Do not know how to serialize a BigInt
+
 stringifyWithBigIntAsString({ id: 123n });
 // '{"id":"123"}'
 ```
@@ -328,12 +380,6 @@ stringifyWithBigIntAsString({ id: 123n });
 ### `stringifyWithSortedKeys`
 
 Serialises deterministic JSON by sorting object keys at every nesting level.
-
-Behaviour:
-
-- Object keys are sorted alphabetically.
-- Array order is preserved.
-- `undefined` object properties are omitted.
 
 ```ts
 stringifyWithSortedKeys({ b: 2, a: 1 });
@@ -343,7 +389,30 @@ stringifyWithSortedKeys([{ z: 1, a: 2 }]);
 // '[{"a":2,"z":1}]'
 ```
 
+**Behaviour:**
+
+- Object keys are sorted alphabetically.
+- Array order is preserved.
+- `undefined` object properties are omitted.
+
 ## Number
+
+```ts
+import {
+  clamp,
+  findNearest,
+  isAscending,
+  isDescending,
+  isFiniteNumber,
+  isNumber,
+  lerp,
+  remap,
+  roundToPrecision,
+  roundToStep,
+  sequence,
+  unlerp,
+} from "@jossmac/lil-libs/number";
+```
 
 ### `isNumber`
 
@@ -351,13 +420,15 @@ Runtime guard for JavaScript numbers, excluding `NaN`.
 
 ```ts
 isNumber(42); // true
-isNumber(NaN); // false
 isNumber(Infinity); // true
+isNumber(NaN); // false
+isNumber("foo"); // false
+isNumber({}); // false
 ```
 
 ### `isFiniteNumber`
 
-Runtime guard for finite numbers.
+A convenience wrapper around `isNumber`, that also checks whether the value is finite.
 
 ```ts
 isFiniteNumber(42); // true
@@ -414,11 +485,6 @@ roundToStep(-5.26, 0.25); // -5.25
 
 Returns the closest value from a list, with configurable tie-breaking.
 
-Bias options:
-
-- `"first"` / `"last"` — prefer the item that appears earlier or later in the array.
-- `"smaller"` / `"larger"` — prefer the numerically smaller or larger tied value.
-
 ```ts
 const items = [1, 3, 5, 7, 9];
 
@@ -428,22 +494,27 @@ findNearest(4, items, "smaller"); // 3
 findNearest(4, items, "larger"); // 5
 ```
 
+**Bias options:**
+
+- `"first"` / `"last"` — prefer the item that appears earlier or later in the array.
+- `"smaller"` / `"larger"` — prefer the numerically smaller or larger tied value.
+
 ### `sequence`
 
 Generates inclusive numeric sequences in ascending or descending order.
-
-Behaviour:
-
-- Includes both start and end when reachable by step increments.
-- Supports negative step input (uses absolute step size).
-- Derives decimal precision from the provided step.
-- Throws for `step = 0` or non-finite step values.
 
 ```ts
 sequence(1, 5); // [1, 2, 3, 4, 5]
 sequence(5, 1); // [5, 4, 3, 2, 1]
 sequence(0, 1, 0.33); // [0, 0.33, 0.66, 0.99]
 ```
+
+**Behaviour:**
+
+- Includes both start and end when reachable by step increments.
+- Supports negative step input (uses absolute step size).
+- Derives decimal precision from the provided step.
+- Throws for `step = 0` or non-finite step values.
 
 ### `lerp`
 
@@ -469,13 +540,6 @@ unlerp(0, 10, 15); // 1
 
 Maps a value from one numeric range to another using linear interpolation.
 
-Behaviour:
-
-- Clamps to the output range by default.
-- Supports negative and floating-point ranges.
-- Allows extrapolation with `{ clamp: false }`.
-- Handles degenerate input ranges (`from === to`) predictably.
-
 ```ts
 remap(5, [0, 10], [0, 100]); // 50
 remap(-5, [-10, 0], [0, 100]); // 50
@@ -487,7 +551,24 @@ remap(15, [0, 10], [0, 100]); // 100 (clamped)
 remap(15, [0, 10], [0, 100], { clamp: false }); // 150
 ```
 
+**Behaviour:**
+
+- Clamps to the output range by default.
+- Supports negative and floating-point ranges.
+- Allows extrapolation with `{ clamp: false }`.
+- Handles degenerate input ranges (`from === to`) predictably.
+
 ## Object
+
+```ts
+import {
+  TObject,
+  isPlainObject,
+  typedEntries,
+  typedFromEntries,
+  typedKeys,
+} from "@jossmac/lil-libs/object";
+```
 
 ### `isPlainObject`
 
@@ -547,6 +628,12 @@ const keys = TObject.keys({ foo: 1, bar: "hello" });
 
 ## Random
 
+Exports a single `random` object containing all methods to avoid naming collisions.
+
+```ts
+import { random } from "@jossmac/lil-libs/random";
+```
+
 ### `random.bool`
 
 Returns random boolean values.
@@ -559,29 +646,29 @@ random.bool(); // true or false
 
 Generates random integers in an inclusive range.
 
-Behaviour:
-
-- `random.int(min, max)` is inclusive of both bounds.
-- Reversed bounds are automatically normalised.
-
 ```ts
 random.int(1, 3); // 1, 2, or 3
 random.int(10, 1); // still valid
 ```
 
+**Behaviour:**
+
+- `random.int(min, max)` is inclusive of both bounds.
+- Reversed bounds are automatically normalised.
+
 ### `random.float`
 
 Generates random floating-point numbers in a half-open range.
-
-Behaviour:
-
-- `random.float(min, max)` is inclusive of `min` and exclusive of `max`.
-- Reversed bounds are automatically normalised.
 
 ```ts
 random.float(10, 20); // 10 <= n < 20
 random.float(20, 10); // still valid
 ```
+
+**Behaviour:**
+
+- `random.float(min, max)` is inclusive of `min` and exclusive of `max`.
+- Reversed bounds are automatically normalised.
 
 ### `random.choice`
 
@@ -595,13 +682,6 @@ random.choice(["a", "b", "c"]); // one item
 
 Returns a randomly sampled subset without mutating the original array.
 
-Behaviour:
-
-- Defaults to `count = 1`.
-- Returns an empty array when `count` is `0`.
-- Returns all items when `count` equals the array length.
-- Never mutates the input array.
-
 ```ts
 const items = ["a", "b", "c", "d"];
 
@@ -611,6 +691,13 @@ random.sample(items, 0); // []
 
 items; // still ["a", "b", "c", "d"]
 ```
+
+**Behaviour:**
+
+- Defaults to `count = 1`.
+- Returns an empty array when `count` is `0`.
+- Returns all items when `count` equals the array length.
+- Never mutates the input array.
 
 ### `random.shuffle`
 
@@ -647,6 +734,16 @@ sampleTwo(); // random 2-item sample each call
 
 ## String
 
+```ts
+import {
+  base64Encode,
+  contains,
+  formatInitials,
+  isString,
+  pluralize,
+} from "@jossmac/lil-libs/string";
+```
+
 ### `isString`
 
 Type guard for string values.
@@ -654,6 +751,18 @@ Type guard for string values.
 ```ts
 isString("hello"); // true
 isString(123); // false
+```
+
+### `base64Encode`
+
+Encodes UTF-8 strings to base64, or to a base64 data URI when a MIME type is provided.
+
+```ts
+base64Encode("hello");
+// "aGVsbG8="
+
+base64Encode("hello", "text/plain");
+// "data:text/plain;base64,aGVsbG8="
 ```
 
 ### `contains`
@@ -677,25 +786,59 @@ pluralize(2, ["person", "people"]); // "2 people"
 pluralize(2, ["person", "people"], false); // "people"
 ```
 
-### `base64Encode`
+### `formatInitials`
 
-Encodes UTF-8 strings to base64, or to a base64 data URI when a MIME type is provided.
+Returns initials for names with Unicode-aware grapheme support.
 
-Behaviour:
+```ts
+function formatInitials(
+  name: string,
+  options?: {
+    maxLetters?: number;
+    locale?: string;
+  },
+): string;
+```
+
+```ts
+formatInitials("John Doe"); // "JD"
+formatInitials("John Ronald Reuel Tolkien"); // "JT"
+formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
+formatInitials("Élodie Durand"); // "ÉD"
+formatInitials("ilker", { locale: "tr" }); // "İL"
+formatInitials("李小龍"); // "李小"
+```
+
+**Behaviour:**
+
+- Defaults to `maxLetters = 2`.
+- Uses first + last word initials for multi-word names when `maxLetters === 2`.
+- Uses the first letter from each word (left to right) when `maxLetters >= 3`.
+- For single-word names, uses the first `maxLetters` letters.
+- Returns `"?"` for empty or whitespace-only input.
+- Throws when `maxLetters` is not finite or is less than `1`.
+
+**Behaviour:**
 
 - Supports Unicode input.
 - Preserves MIME type in data URI output.
 - Optimises SVG payload whitespace when `mimeType` is `"image/svg+xml"`.
 
-```ts
-base64Encode("hello");
-// "aGVsbG8="
-
-base64Encode("hello", "text/plain");
-// "data:text/plain;base64,aGVsbG8="
-```
-
 ## Types
+
+```ts
+import type {
+  Maybe,
+  NonNullableValues,
+  Prettify,
+  Satisfies,
+  SomeOptional,
+  SomeRequired,
+  TupleOf,
+  UnknownRecord,
+  Widen,
+} from "@jossmac/lil-libs/string";
+```
 
 ### `Maybe<T>`
 

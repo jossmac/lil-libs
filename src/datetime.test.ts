@@ -1,64 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { formatInitials, relativeTime } from "./format";
+import { relativeTime } from "./datetime";
 
-describe("lil-libs/format", () => {
-  describe("formatInitials", () => {
-    it("should return the initials for a name", () => {
-      expect(formatInitials("John Doe")).toBe("JD");
-      expect(formatInitials("John Henry Doe")).toBe("JD");
-      expect(formatInitials("John Ronald Reuel Tolkien")).toBe("JT");
-    });
-
-    it("supports custom max letters", () => {
-      expect(formatInitials("John Doe", { maxLetters: 1 })).toBe("J");
-      expect(formatInitials("John Henry Doe", { maxLetters: 4 })).toBe("JHD");
-      expect(
-        formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }),
-      ).toBe("JRR");
-    });
-
-    it("supports single word", () => {
-      expect(formatInitials("Infinex")).toBe("IN");
-      expect(formatInitials("Prince")).toBe("PR");
-    });
-
-    it('returns "?" for an empty string', () => {
-      expect(formatInitials("")).toBe("?");
-      expect(formatInitials(" ")).toBe("?");
-      expect(formatInitials("   ")).toBe("?");
-    });
-
-    it("throws an error for invalid max letters", () => {
-      expect(() => formatInitials("John Doe", { maxLetters: 0 })).toThrow(
-        "maxLetters must be a finite number greater than or equal to 1.",
-      );
-      expect(() =>
-        formatInitials("John Doe", { maxLetters: Number.NaN }),
-      ).toThrow(
-        "maxLetters must be a finite number greater than or equal to 1.",
-      );
-      expect(() =>
-        formatInitials("John Doe", { maxLetters: Number.POSITIVE_INFINITY }),
-      ).toThrow(
-        "maxLetters must be a finite number greater than or equal to 1.",
-      );
-    });
-
-    it("maintains diacritics", () => {
-      expect(formatInitials("Élodie Durand")).toBe("ÉD");
-    });
-
-    it("supports logographic languages", () => {
-      expect(formatInitials("李小龍")).toBe("李小");
-      expect(formatInitials("宮崎 駿")).toBe("宮駿");
-    });
-
-    it("honours locale-aware uppercasing", () => {
-      expect(formatInitials("ilker", { locale: "tr" })).toBe("İL");
-      expect(formatInitials("ilker", { locale: "en" })).toBe("IL");
-    });
-  });
+describe("lil-libs/datetime", () => {
   describe("utils/relativeTime", () => {
     const now = new Date("2026-01-07T12:00:00Z").getTime();
     const dates = [

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 
-import { base64Encode, contains, pluralize } from "./string";
+import { base64Encode, contains, formatInitials, pluralize } from "./string";
 
 describe("lil-libs/string", () => {
   const originalBuffer = (globalThis as { Buffer?: unknown }).Buffer;
@@ -104,6 +104,62 @@ describe("lil-libs/string", () => {
       expect(contains("café", "CAFE")).toBe(true);
       expect(contains("café", "cafE")).toBe(true);
       expect(contains("café", "caffe")).toBe(false);
+    });
+  });
+  describe("formatInitials", () => {
+    it("should return the initials for a name", () => {
+      expect(formatInitials("John Doe")).toBe("JD");
+      expect(formatInitials("John Henry Doe")).toBe("JD");
+      expect(formatInitials("John Ronald Reuel Tolkien")).toBe("JT");
+    });
+
+    it("supports custom max letters", () => {
+      expect(formatInitials("John Doe", { maxLetters: 1 })).toBe("J");
+      expect(formatInitials("John Henry Doe", { maxLetters: 4 })).toBe("JHD");
+      expect(
+        formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }),
+      ).toBe("JRR");
+    });
+
+    it("supports single word", () => {
+      expect(formatInitials("Infinex")).toBe("IN");
+      expect(formatInitials("Prince")).toBe("PR");
+    });
+
+    it('returns "?" for an empty string', () => {
+      expect(formatInitials("")).toBe("?");
+      expect(formatInitials(" ")).toBe("?");
+      expect(formatInitials("   ")).toBe("?");
+    });
+
+    it("throws an error for invalid max letters", () => {
+      expect(() => formatInitials("John Doe", { maxLetters: 0 })).toThrow(
+        "maxLetters must be a finite number greater than or equal to 1.",
+      );
+      expect(() =>
+        formatInitials("John Doe", { maxLetters: Number.NaN }),
+      ).toThrow(
+        "maxLetters must be a finite number greater than or equal to 1.",
+      );
+      expect(() =>
+        formatInitials("John Doe", { maxLetters: Number.POSITIVE_INFINITY }),
+      ).toThrow(
+        "maxLetters must be a finite number greater than or equal to 1.",
+      );
+    });
+
+    it("maintains diacritics", () => {
+      expect(formatInitials("Élodie Durand")).toBe("ÉD");
+    });
+
+    it("supports logographic languages", () => {
+      expect(formatInitials("李小龍")).toBe("李小");
+      expect(formatInitials("宮崎 駿")).toBe("宮駿");
+    });
+
+    it("honours locale-aware uppercasing", () => {
+      expect(formatInitials("ilker", { locale: "tr" })).toBe("İL");
+      expect(formatInitials("ilker", { locale: "en" })).toBe("IL");
     });
   });
   describe("pluralize", () => {
