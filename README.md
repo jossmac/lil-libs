@@ -362,6 +362,7 @@ function relativeTime(
 
 ```ts
 import {
+  ariaCurrent,
   atScrollBottom,
   atScrollLeft,
   atScrollRight,
@@ -375,6 +376,7 @@ import {
   isKeyboardInput,
   isTouchCapable,
   isTouchDevice,
+  joinIds,
   nearestComputedStyle,
   querySelector,
   querySelectorAll,
@@ -497,6 +499,40 @@ Possible values:
 getDisplayMode();
 // e.g. "browser" in a tab, "standalone" in an installed PWA
 ```
+
+### `ariaCurrent`
+
+Returns the appropriate `aria-current` value for a nav item based on the current path.
+
+```ts
+ariaCurrent("/about", "/about"); // "page"
+ariaCurrent("/about/team", "/about"); // "true"
+ariaCurrent("/contact", "/about"); // "false"
+ariaCurrent("/about-us", "/about"); // "false" (not a child match)
+```
+
+**Behaviour:**
+
+- Returns `"page"` for exact path matches.
+- Returns `"true"` for child routes (for example `/about/team` under `/about`).
+- Returns `"false"` for non-matches and null pathnames.
+- Normalizes trailing slashes (except root) before matching.
+
+### `joinIds`
+
+Joins IDs for ARIA attributes like `aria-labelledby` and `aria-describedby`.
+
+```ts
+joinIds("title-id", "description-id"); // "title-id description-id"
+joinIds("title-id", null, undefined, "", false, "description-id"); // "title-id description-id"
+joinIds(null, undefined, "", false); // undefined
+```
+
+**Behaviour:**
+
+- Filters out falsy values (`null`, `undefined`, `false`, `""`).
+- Returns IDs joined by a single space.
+- Returns `undefined` when no valid IDs remain.
 
 ### `toDataAttributes`
 
