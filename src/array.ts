@@ -118,7 +118,7 @@ export function partition<T>(
  * string, based on a stable hash of the string.
  *
  * @example
- * const getColor = stableKeyFactory(['red', 'green', 'blue']);
+ * const getColor = createDeterministicKeySelector(['red', 'green', 'blue']);
  * getColor('Albert'); // 'blue'
  * getColor('Barbara'); // 'green'
  * getColor('Charlie'); // 'red'
@@ -126,7 +126,9 @@ export function partition<T>(
  * @param keys - The keys to use for the function.
  * @returns A function that returns an item from the provided array.
  */
-export function stableKeyFactory<const T extends readonly string[]>(keys: T) {
+export function createDeterministicKeySelector<
+  const T extends readonly string[],
+>(keys: T) {
   assert(isPopulatedArray(keys), "Requires at least one key.");
 
   return function selectKeyFromStableHash(value: string): T[number] {
@@ -140,7 +142,7 @@ export function stableKeyFactory<const T extends readonly string[]>(keys: T) {
     const selected = keys[index];
     if (selected === undefined) {
       throw new Error(
-        "Unreachable: stableKeyFactory received an empty keys array",
+        "Unreachable: createDeterministicKeySelector received an empty keys array",
       );
     }
     return selected;

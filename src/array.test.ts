@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   chunk,
-  stableKeyFactory,
+  createDeterministicKeySelector,
   isIterable,
   isLength,
   isPopulatedArray,
@@ -121,9 +121,9 @@ describe("lil-libs/array", () => {
     });
   });
 
-  describe("stableKeyFactory", () => {
+  describe("createDeterministicKeySelector", () => {
     const colors = ["red", "green", "blue"] as const;
-    const getColor = stableKeyFactory(colors);
+    const getColor = createDeterministicKeySelector(colors);
 
     it("returns a stable item from the array, for the given string", () => {
       // check twice for stability
@@ -145,7 +145,9 @@ describe("lil-libs/array", () => {
       >();
     });
     it("throws an error if the array is empty", () => {
-      expect(() => stableKeyFactory([])).toThrow("Requires at least one key.");
+      expect(() => createDeterministicKeySelector([])).toThrow(
+        "Requires at least one key.",
+      );
     });
   });
 

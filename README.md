@@ -11,7 +11,7 @@ import {
   isLength,
   isPopulatedArray,
   partition,
-  stableKeyFactory,
+  createDeterministicKeySelector,
   toArray,
 } from "@jossmac/lil-libs/array";
 ```
@@ -91,13 +91,13 @@ partition(["a", "bb", "ccc"], (s) => s.length > 1);
 - Preserves the original item order within both output arrays.
 - Passes `(item, index, array)` to the predicate.
 
-### `stableKeyFactory`
+### `createDeterministicKeySelector`
 
 Creates a function that deterministically maps a string to one of the provided keys using a stable hash.
 
 ```ts
 const colors = ["red", "green", "blue"] as const;
-const getColor = stableKeyFactory(colors);
+const getColor = createDeterministicKeySelector(colors);
 
 getColor("Albert"); // 'blue'
 getColor("Barbara"); // 'green'
