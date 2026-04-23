@@ -78,6 +78,10 @@
     "fix": "pnpm fix:lint && pnpm fix:format",
     "fix:lint": "eslint . --ext .ts --fix",
     "fix:format": "prettier --write .",
+    "release": "node scripts/release.mjs",
+    "release:patch": "pnpm release patch",
+    "release:minor": "pnpm release minor",
+    "release:major": "pnpm release major",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -88,7 +92,9 @@
     "utils",
     "utilities",
     "helpers",
-    "type-guards"
+    "type-guards",
+    "frontend",
+    "browser"
   ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",

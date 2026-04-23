@@ -1201,4 +1201,10 @@ pnpm check:format   # Prettier
 pnpm test           # run tests once
 pnpm test:watch     # watch mode
 pnpm test:coverage  # run tests with v8 coverage
+
+pnpm release patch  # bump patch, create tag, push commit + tag
+pnpm release minor  # bump minor, create tag, push commit + tag
+pnpm release major  # bump major, create tag, push commit + tag
+
+pnpm release patch -- --no-push  # keep release commit + tag local
 ```
