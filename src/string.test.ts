@@ -132,6 +132,13 @@ describe("lil-libs/string", () => {
       expect(formatInitials("   ")).toBe("?");
     });
 
+    it("ignores punctuation and symbols", () => {
+      expect(formatInitials("John (Admin) Doe")).toBe("JD");
+      expect(formatInitials("John (Admin) Doe", { maxLetters: 3 })).toBe("JAD");
+      expect(formatInitials("!!John!!")).toBe("JO");
+      expect(formatInitials("!@#*")).toBe("?");
+    });
+
     it("throws an error for invalid max letters", () => {
       expect(() => formatInitials("John Doe", { maxLetters: 0 })).toThrow(
         "maxLetters must be a finite number greater than or equal to 1.",

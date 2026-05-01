@@ -227,7 +227,10 @@ export function formatInitials(name: string, options: InitialsOptions = {}) {
 
   if (!name) return "?";
 
-  const cleaned = name.replace(/\s+/gu, " ");
+  const cleaned = alphanumeric(name);
+
+  if (!cleaned) return "?";
+
   const words = cleaned.split(/\s+/u).filter(Boolean);
 
   const segmenter =
@@ -266,4 +269,18 @@ export function formatInitials(name: string, options: InitialsOptions = {}) {
       return toUpper(graphemes[0] ?? "");
     })
     .join("");
+}
+
+/**
+ * Normalizes a string to letters, numbers, and spaces only.
+ *
+ * - Keeps all Unicode letters (`\p{L}`) and numbers (`\p{N}`)
+ * - Replaces punctuation/symbol runs with a single space
+ * - Collapses repeated whitespace and trims leading/trailing space
+ */
+function alphanumeric(str: string) {
+  return str
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
 }
