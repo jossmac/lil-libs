@@ -1,6 +1,17 @@
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest";
 
-import { base64Encode, contains, formatInitials, pluralize } from "./string";
+import {
+  base64Encode,
+  camelCase,
+  contains,
+  formatInitials,
+  kebabCase,
+  pascalCase,
+  pluralize,
+  sentenceCase,
+  snakeCase,
+  titleCase,
+} from "./string";
 
 describe("lil-libs/string", () => {
   const originalBuffer = (globalThis as { Buffer?: unknown }).Buffer;
@@ -190,6 +201,117 @@ describe("lil-libs/string", () => {
       expect(pluralize(0, ["person", "people"], false)).toBe("people");
       expect(pluralize(1, ["person", "people"], false)).toBe("person");
       expect(pluralize(2, ["person", "people"], false)).toBe("people");
+    });
+  });
+
+  describe("camelCase", () => {
+    it("converts strings to camelCase", () => {
+      expect(camelCase("foo bar")).toBe("fooBar");
+      expect(camelCase("foo-bar")).toBe("fooBar");
+      expect(camelCase("foo_bar")).toBe("fooBar");
+      expect(camelCase("FOO_BAR")).toBe("fooBar");
+      expect(camelCase("HTMLParser")).toBe("htmlParser");
+      expect(camelCase("iPhone")).toBe("iPhone");
+      expect(camelCase("a-b-c")).toBe("aBC");
+    });
+    it("handles empty strings", () => {
+      expect(camelCase("")).toBe("");
+      expect(camelCase("   ")).toBe("");
+    });
+    it("handles digits", () => {
+      expect(camelCase("version 2.0")).toBe("version20");
+      expect(camelCase("foo 123 bar")).toBe("foo123Bar");
+    });
+    it("supports locale option", () => {
+      expect(camelCase("İLKER", { locale: "tr" })).toBe("ilker");
+    });
+  });
+
+  describe("kebabCase", () => {
+    it("converts strings to kebab-case", () => {
+      expect(kebabCase("foo bar")).toBe("foo-bar");
+      expect(kebabCase("fooBar")).toBe("foo-bar");
+      expect(kebabCase("FOO_BAR")).toBe("foo-bar");
+      expect(kebabCase("HTMLParser")).toBe("html-parser");
+      expect(kebabCase("a-b-c")).toBe("a-b-c");
+    });
+    it("handles empty strings", () => {
+      expect(kebabCase("")).toBe("");
+      expect(kebabCase("   ")).toBe("");
+    });
+    it("supports locale option", () => {
+      expect(kebabCase("İLKER", { locale: "tr" })).toBe("ilker");
+    });
+  });
+
+  describe("pascalCase", () => {
+    it("converts strings to PascalCase", () => {
+      expect(pascalCase("foo bar")).toBe("FooBar");
+      expect(pascalCase("foo-bar")).toBe("FooBar");
+      expect(pascalCase("foo_bar")).toBe("FooBar");
+      expect(pascalCase("FOO_BAR")).toBe("FooBar");
+      expect(pascalCase("HTMLParser")).toBe("HtmlParser");
+      expect(pascalCase("iPhone")).toBe("IPhone");
+    });
+    it("handles empty strings", () => {
+      expect(pascalCase("")).toBe("");
+      expect(pascalCase("   ")).toBe("");
+    });
+    it("supports locale option", () => {
+      expect(pascalCase("ilker", { locale: "tr" })).toBe("İlker");
+    });
+  });
+
+  describe("sentenceCase", () => {
+    it("converts strings to sentence case", () => {
+      expect(sentenceCase("foo bar")).toBe("Foo bar");
+      expect(sentenceCase("foo-bar")).toBe("Foo bar");
+      expect(sentenceCase("foo_bar")).toBe("Foo bar");
+      expect(sentenceCase("FOO_BAR")).toBe("Foo bar");
+      expect(sentenceCase("HTMLParser")).toBe("Html parser");
+      expect(sentenceCase("iPhone")).toBe("I phone");
+    });
+    it("handles empty strings", () => {
+      expect(sentenceCase("")).toBe("");
+      expect(sentenceCase("   ")).toBe("");
+    });
+    it("supports locale option", () => {
+      expect(sentenceCase("ilker", { locale: "tr" })).toBe("İlker");
+    });
+  });
+
+  describe("snakeCase", () => {
+    it("converts strings to snake_case", () => {
+      expect(snakeCase("foo bar")).toBe("foo_bar");
+      expect(snakeCase("foo-bar")).toBe("foo_bar");
+      expect(snakeCase("fooBar")).toBe("foo_bar");
+      expect(snakeCase("HTMLParser")).toBe("html_parser");
+    });
+    it("handles empty strings", () => {
+      expect(snakeCase("")).toBe("");
+      expect(snakeCase("   ")).toBe("");
+    });
+    it("supports locale option", () => {
+      expect(snakeCase("İLKER", { locale: "tr" })).toBe("ilker");
+    });
+  });
+
+  describe("titleCase", () => {
+    it("converts strings to Title Case, lowercasing minor words", () => {
+      expect(titleCase("a comparison of cases")).toBe("A Comparison of Cases");
+      expect(titleCase("the wind in the willows")).toBe(
+        "The Wind in the Willows",
+      );
+      expect(titleCase("to be or not to be")).toBe("To Be or Not to Be");
+    });
+    it("handles empty strings", () => {
+      expect(titleCase("")).toBe("");
+      expect(titleCase("   ")).toBe("");
+    });
+    it("supports locale option", () => {
+      expect(titleCase("ilker and ahmet", { locale: "tr" })).toBe(
+        "İlker and Ahmet",
+      );
     });
   });
 });

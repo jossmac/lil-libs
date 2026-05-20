@@ -272,15 +272,213 @@ export function formatInitials(name: string, options: InitialsOptions = {}) {
 }
 
 /**
+ * @private
  * Normalizes a string to letters, numbers, and spaces only.
  *
  * - Keeps all Unicode letters (`\p{L}`) and numbers (`\p{N}`)
  * - Replaces punctuation/symbol runs with a single space
  * - Collapses repeated whitespace and trims leading/trailing space
  */
-function alphanumeric(str: string) {
-  return str
+function alphanumeric(value: string) {
+  return value
     .replace(/[^\p{L}\p{N}\s]+/gu, " ")
     .replace(/\s+/gu, " ")
     .trim();
+}
+
+export type CaseOptions = {
+  /**
+   * The locale to use for character case conversions.
+   * @default undefined (system locale)
+   */
+  locale?: string;
+};
+
+/**
+ * @private
+ * Splits a string into words based on case transitions, whitespace, and punctuation.
+ */
+function splitWords(value: string): string[] {
+  const WORD_REGEX = /\p{Lu}+(?=\p{Lu}\p{Ll})|\p{Lu}?\p{Ll}+|\p{Lu}+|\p{N}+/gu;
+  return value.match(WORD_REGEX) || [];
+}
+
+/**
+ * Converts a string to camelCase.
+ *
+ * @example
+ * camelCase('Foo Bar'); // 'fooBar'
+ * camelCase('--foo-bar--'); // 'fooBar'
+ * camelCase('HTMLParser'); // 'htmlParser'
+ *
+ * @param value - The string to convert.
+ * @param options - Options for the conversion.
+ * @returns The camelCased string.
+ */
+export function camelCase(value: string, options: CaseOptions = {}): string {
+  const { locale } = options;
+  const words = splitWords(value);
+  if (words.length === 0) return "";
+
+  return words
+    .map((word, index) => {
+      const chars = Array.from(word);
+      if (index === 0) {
+        return word.toLocaleLowerCase(locale);
+      }
+      const firstLetter = (chars[0] ?? "").toLocaleUpperCase(locale);
+      const rest = chars.slice(1).join("").toLocaleLowerCase(locale);
+      return firstLetter + rest;
+    })
+    .join("");
+}
+
+/**
+ * Converts a string to kebab-case.
+ *
+ * @example
+ * kebabCase('Foo Bar'); // 'foo-bar'
+ * kebabCase('fooBar'); // 'foo-bar'
+ * kebabCase('HTMLParser'); // 'html-parser'
+ *
+ * @param value - The string to convert.
+ * @param options - Options for the conversion.
+ * @returns The kebab-cased string.
+ */
+export function kebabCase(value: string, options: CaseOptions = {}): string {
+  const { locale } = options;
+  return splitWords(value)
+    .map((word) => word.toLocaleLowerCase(locale))
+    .join("-");
+}
+
+/**
+ * Converts a string to PascalCase.
+ *
+ * @example
+ * pascalCase('Foo Bar'); // 'FooBar'
+ * pascalCase('foo-bar'); // 'FooBar'
+ * pascalCase('HTMLParser'); // 'HtmlParser'
+ *
+ * @param value - The string to convert.
+ * @param options - Options for the conversion.
+ * @returns The PascalCased string.
+ */
+export function pascalCase(value: string, options: CaseOptions = {}): string {
+  const { locale } = options;
+  return splitWords(value)
+    .map((word) => {
+      const chars = Array.from(word);
+      const firstLetter = (chars[0] ?? "").toLocaleUpperCase(locale);
+      const rest = chars.slice(1).join("").toLocaleLowerCase(locale);
+      return firstLetter + rest;
+    })
+    .join("");
+}
+
+/**
+ * Converts a string to sentence case.
+ *
+ * @example
+ * sentenceCase('Foo Bar'); // 'Foo bar'
+ * sentenceCase('fooBar'); // 'Foo bar'
+ * sentenceCase('HTMLParser'); // 'Html parser'
+ *
+ * @param value - The string to convert.
+ * @param options - Options for the conversion.
+ * @returns The sentence-cased string.
+ */
+export function sentenceCase(value: string, options: CaseOptions = {}): string {
+  const { locale } = options;
+  const words = splitWords(value);
+  if (words.length === 0) return "";
+
+  return words
+    .map((word, index) => {
+      const chars = Array.from(word);
+      if (index === 0) {
+        const firstLetter = (chars[0] ?? "").toLocaleUpperCase(locale);
+        const rest = chars.slice(1).join("").toLocaleLowerCase(locale);
+        return firstLetter + rest;
+      }
+      return word.toLocaleLowerCase(locale);
+    })
+    .join(" ");
+}
+
+/**
+ * Converts a string to snake_case.
+ *
+ * @example
+ * snakeCase('Foo Bar'); // 'foo_bar'
+ * snakeCase('foo-bar'); // 'foo_bar'
+ * snakeCase('HTMLParser'); // 'html_parser'
+ *
+ * @param value - The string to convert.
+ * @param options - Options for the conversion.
+ * @returns The snake_cased string.
+ */
+export function snakeCase(value: string, options: CaseOptions = {}): string {
+  const { locale } = options;
+  return splitWords(value)
+    .map((word) => word.toLocaleLowerCase(locale))
+    .join("_");
+}
+
+const MINOR_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "but",
+  "or",
+  "nor",
+  "as",
+  "at",
+  "by",
+  "for",
+  "in",
+  "of",
+  "on",
+  "per",
+  "to",
+  "vs",
+  "with",
+]);
+
+/**
+ * Converts a string to Title Case, capitalizing all major words
+ * but keeping articles, prepositions, and conjunctions in lowercase
+ * unless they are the first or last word.
+ *
+ * @example
+ * titleCase('a comparison of cases'); // 'A Comparison of Cases'
+ * titleCase('the wind in the willows'); // 'The Wind in the Willows'
+ *
+ * @param value - The string to convert.
+ * @param options - Options for the conversion.
+ * @returns The title-cased string.
+ */
+export function titleCase(value: string, options: CaseOptions = {}): string {
+  const { locale } = options;
+  const words = splitWords(value);
+  const length = words.length;
+  if (length === 0) return "";
+
+  return words
+    .map((word, index) => {
+      const lower = word.toLocaleLowerCase(locale);
+      const isFirst = index === 0;
+      const isLast = index === length - 1;
+
+      if (!isFirst && !isLast && MINOR_WORDS.has(lower)) {
+        return lower;
+      }
+
+      const chars = Array.from(word);
+      const firstLetter = (chars[0] ?? "").toLocaleUpperCase(locale);
+      const rest = chars.slice(1).join("").toLocaleLowerCase(locale);
+      return firstLetter + rest;
+    })
+    .join(" ");
 }
