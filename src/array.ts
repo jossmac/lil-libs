@@ -13,6 +13,18 @@ export function isPopulatedArray<T>(
 /**
  * Checks if an array has a specific length, narrowing the type to a tuple of
  * the given length.
+ *
+ * @example
+ * const names = ["Alice", "Bob", "Charlie"];
+ * const name = names[2]; // string | undefined
+ * if (isLength(names, 3)) {
+ *   const name = names[2]; // string
+ *   const otherName = names[3]; // undefined
+ * }
+ *
+ * @param arr - The array to check.
+ * @param length - The length to check for.
+ * @returns `true` if the array has the given length.
  */
 export function isLength<T, N extends number>(
   arr: readonly T[],
