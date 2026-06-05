@@ -910,6 +910,7 @@ remap(15, [0, 10], [0, 100], { clamp: false }); // 150
 import {
   TObject,
   isPlainObject,
+  populatedKeys,
   typedEntries,
   typedFromEntries,
   typedKeys,
@@ -936,6 +937,22 @@ const obj = { foo: 1, bar: "hello" };
 
 const keys = typedKeys(obj);
 //    ^? ("foo" | "bar")[]
+```
+
+### `populatedKeys`
+
+Like `typedKeys`, but narrows the return type to a non-empty tuple. Throws if the object has no own enumerable keys.
+
+```ts
+const obj = { foo: 1, bar: "hello" };
+
+const keys = populatedKeys(obj);
+//    ^? ["foo" | "bar", ...("foo" | "bar")[]]
+
+const firstKey = keys[0];
+//    ^? "foo" | "bar"
+
+populatedKeys({}); // throws "Object has no keys."
 ```
 
 ### `typedEntries`

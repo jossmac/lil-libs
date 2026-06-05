@@ -1,3 +1,5 @@
+import { isPopulatedArray } from "./array";
+import { assert } from "./assert";
 import type { UnknownRecord, Widen } from "./types";
 
 type ObjectEntry<T> = { [K in keyof T]: [K, T[K]] }[keyof T];
@@ -38,6 +40,23 @@ export const TObject = {
  */
 export function typedKeys<T extends object>(value: T) {
   return Object.keys(value) as Array<keyof T>;
+}
+
+/**
+ * Like {@link typedKeys}, but narrows the return type to a non-empty tuple. Throws if
+ * the object has no own enumerable keys.
+ *
+ * @example
+ * typedKeys({ foo: 1, bar: 2 }) // ("foo" | "bar")[]
+ * populatedKeys({ foo: 1, bar: 2 }) // ["foo" | "bar", ...("foo" | "bar")[]]
+ * populatedKeys({}) // throws "Object has no keys."
+ */
+export function populatedKeys<T extends object>(
+  value: T,
+): [keyof T, ...(keyof T)[]] {
+  const keys = typedKeys(value);
+  assert(isPopulatedArray(keys), "Object has no keys.");
+  return keys;
 }
 
 /**

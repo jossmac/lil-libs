@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
   isPlainObject,
+  populatedKeys,
   typedEntries,
   typedKeys,
   typedFromEntries,
@@ -41,6 +42,29 @@ describe("lil-libs/object", () => {
       expectTypeOf(typedKeys(obj)).toEqualTypeOf<
         Array<"foo" | "bar" | "baz">
       >();
+    });
+  });
+
+  describe("populatedKeys", () => {
+    it("should match `Object.keys` runtime behavior exactly", () => {
+      const obj = { foo: 1, bar: "hello", baz: true };
+      expect(populatedKeys(obj)).toEqual(Object.keys(obj));
+    });
+
+    it("should preserve specific key literal types as a non-empty tuple", () => {
+      const obj = { foo: 1, bar: "hello", baz: true };
+      expectTypeOf(populatedKeys(obj)).toEqualTypeOf<
+        ["foo" | "bar" | "baz", ...("foo" | "bar" | "baz")[]]
+      >();
+    });
+
+    it("should allow safe access to the first key", () => {
+      const keys = populatedKeys({ foo: 1 });
+      expectTypeOf(keys[0]).toEqualTypeOf<"foo">();
+    });
+
+    it("should throw an error if the object has no keys", () => {
+      expect(() => populatedKeys({})).toThrow("Object has no keys.");
     });
   });
 
