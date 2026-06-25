@@ -1,4 +1,10 @@
 /**
+ * Console helpers that deduplicate repeated log messages.
+ *
+ * @module
+ */
+
+/**
  * Factory function to create a once-only console logging function.
  * Messages are tracked and only logged the first time they are seen.
  *
@@ -18,14 +24,22 @@ function createOnceLogger(
 }
 
 /**
- * Log an error message to the console, but only once per unique message.
+ * Logs each unique error message only once per runtime instance.
+ *
+ * @example
+ * errorOnce("API request failed");
+ * errorOnce("API request failed"); // ignored
  *
  * @param message - The error message to log
  */
 export const errorOnce = createOnceLogger(console.error.bind(console));
 
 /**
- * Log a warning message to the console, but only once per unique message.
+ * Logs each unique warning message only once per runtime instance.
+ *
+ * @example
+ * warnOnce("Using fallback value");
+ * warnOnce("Using fallback value"); // ignored
  *
  * @param message - The warning message to log
  */

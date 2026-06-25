@@ -1,7 +1,7 @@
 {
-  "name": "@jossmac/lil-libs",
-  "version": "1.4.0",
-  "description": "A collection of little library helpers.",
+  "name": "lil-libs-monorepo",
+  "private": true,
+  "description": "Monorepo for @jossmac/lil-libs and its documentation.",
   "license": "MIT",
   "author": "Joss Mackison",
   "repository": {
@@ -9,97 +9,27 @@
     "url": "https://github.com/jossmac/lil-libs.git"
   },
   "type": "module",
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "sideEffects": false,
-  "exports": {
-    "./array": {
-      "types": "./dist/array.d.ts",
-      "import": "./dist/array.js"
-    },
-    "./assert": {
-      "types": "./dist/assert.d.ts",
-      "import": "./dist/assert.js"
-    },
-    "./console": {
-      "types": "./dist/console.d.ts",
-      "import": "./dist/console.js"
-    },
-    "./constants": {
-      "types": "./dist/constants.d.ts",
-      "import": "./dist/constants.js"
-    },
-    "./datetime": {
-      "types": "./dist/datetime.d.ts",
-      "import": "./dist/datetime.js"
-    },
-    "./dom": {
-      "types": "./dist/dom.d.ts",
-      "import": "./dist/dom.js"
-    },
-    "./error": {
-      "types": "./dist/error.d.ts",
-      "import": "./dist/error.js"
-    },
-    "./function": {
-      "types": "./dist/function.d.ts",
-      "import": "./dist/function.js"
-    },
-    "./json": {
-      "types": "./dist/json.d.ts",
-      "import": "./dist/json.js"
-    },
-    "./number": {
-      "types": "./dist/number.d.ts",
-      "import": "./dist/number.js"
-    },
-    "./object": {
-      "types": "./dist/object.d.ts",
-      "import": "./dist/object.js"
-    },
-    "./random": {
-      "types": "./dist/random.d.ts",
-      "import": "./dist/random.js"
-    },
-    "./string": {
-      "types": "./dist/string.d.ts",
-      "import": "./dist/string.js"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js"
-    }
-  },
   "scripts": {
-    "build": "tsup",
+    "build": "pnpm -r build",
     "check": "pnpm check:types && pnpm check:lint && pnpm check:format",
-    "check:types": "tsc --noEmit",
-    "check:lint": "eslint . --ext .ts",
+    "check:types": "pnpm --filter @jossmac/lil-libs check:types",
+    "check:lint": "eslint packages/lil-libs --ext .ts",
     "check:format": "prettier --check .",
     "fix": "pnpm fix:lint && pnpm fix:format",
-    "fix:lint": "eslint . --ext .ts --fix",
+    "fix:lint": "eslint packages/lil-libs --ext .ts --fix",
     "fix:format": "prettier --write .",
+    "test": "pnpm --filter @jossmac/lil-libs test",
+    "test:watch": "pnpm --filter @jossmac/lil-libs test:watch",
+    "test:coverage": "pnpm --filter @jossmac/lil-libs test:coverage",
+    "docs:build": "pnpm --filter @jossmac/lil-libs-docs build",
+    "docs:dev": "pnpm --filter @jossmac/lil-libs-docs dev",
+    "docs:preview": "pnpm --filter @jossmac/lil-libs-docs preview",
     "release": "node scripts/release.mjs",
     "release:patch": "pnpm release patch",
     "release:minor": "pnpm release minor",
     "release:major": "pnpm release major",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "pnpm test && pnpm build"
+    "publish:lib": "pnpm --filter @jossmac/lil-libs publish --access public"
   },
-  "keywords": [
-    "typescript",
-    "utils",
-    "utilities",
-    "helpers",
-    "type-guards",
-    "frontend",
-    "browser"
-  ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.6.0",

@@ -1,3 +1,9 @@
+/**
+ * Datetime formatting utilities.
+ *
+ * @module
+ */
+
 // relativeTime ----------------------------------------------------------------
 
 const UNITS: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
@@ -20,7 +26,7 @@ const DEFAULT_FORMAT: Intl.DateTimeFormatOptions = {
 const ONE_DAY = 24 * 60 * 60 * 1000;
 const TEN_SECONDS = 10 * 1000;
 
-type RelativeOptions = {
+export type RelativeOptions = {
   /**
    * The format of output message.
    *
@@ -45,13 +51,22 @@ type RelativeOptions = {
 };
 
 /**
- * Formats a datetime value to a relative time string (e.g. "5 minutes ago") if
- * within 24 hours, otherwise returns a formatted date string.
+ * Formats a date as relative time for nearby past or future values and falls
+ * back to a date string once the value is 24 hours away or more.
  *
- * @param value - Accepts a Date object or ISO 8601 string (e.g. "2026-01-07T12:00:00Z").
- * @param relativeOptions - The relative time formatting options.
- * @param dateOptions - The date formatting options.
+ * @example
+ * relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
+ * relativeTime(new Date(Date.now() + 1_000 * 60 * 5)); // "in 5 minutes"
+ * relativeTime(new Date(Date.now() - 1_000), { numeric: "auto" }); // "Just now"
+ * relativeTime(new Date(Date.now() - 1_000 * 60), { style: "short" }); // "1 min. ago"
  *
+ * @remarks Accepts a `Date` or ISO 8601 string. Returns relative output within 24
+ * hours. With `numeric: "auto"`, values within 10 seconds return `"Just now"`.
+ * Throws a `TypeError` for invalid date input.
+ *
+ * @param value - A `Date` object or ISO 8601 string.
+ * @param relativeOptions - Relative time formatting options.
+ * @param dateOptions - `Intl.DateTimeFormat` options for the date fallback.
  * @returns The formatted relative time string or date string.
  */
 export function relativeTime(

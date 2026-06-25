@@ -1,0 +1,21 @@
+{
+  "name": "@jossmac/lil-libs-docs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "TypeDoc documentation for @jossmac/lil-libs.",
+  "type": "module",
+  "scripts": {
+    "build": "typedoc",
+    "clean": "rm -rf dist",
+    "predev": "typedoc",
+    "preview": "live-server dist",
+    "dev": "concurrently -k -n typedoc,server -c blue,green \"typedoc --watch\" \"live-server dist\""
+  },
+  "devDependencies": {
+    "@jossmac/lil-libs": "workspace:*",
+    "concurrently": "^10.0.3",
+    "live-server": "^1.2.2",
+    "typedoc": "^0.28.5",
+    "typedoc-github-theme": "^0.4.0"
+  }
+}

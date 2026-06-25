@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "@jossmac/lil-libs",
+  "entryPoints": ["../lil-libs"],
+  "entryPointStrategy": "packages",
+  "exclude": ["**/*.test.ts"],
+  "tsconfig": "../lil-libs/tsconfig.json",
+  "out": "dist",
+  "basePath": "/lil-libs",
+  "readme": "../lil-libs/README.md",
+  "plugin": [
+    "typedoc-github-theme",
+    "./plugin/dedupe-overload-comments.mjs",
+    "./plugin/function-page-navigation.mjs"
+  ],
+  "favicon": "./assets/favicon.svg",
+  "customCss": "./assets/custom.css",
+  "headings": { "readme": false },
+  "githubPages": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/jossmac/lil-libs"
+  }
+}

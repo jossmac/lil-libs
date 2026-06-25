@@ -1,33 +1,46 @@
+/**
+ * Number utilities: guards, clamping, rounding, sequences, and interpolation.
+ *
+ * @module
+ */
+
 import { isPopulatedArray } from "./array";
 
 /**
- * Check if the given value is a _genuine_ JavaScript number.
- *
- * @note Excludes `NaN`. Does not exclude `Infinity | -Infinity`.
+ * Runtime guard for JavaScript numbers, excluding `NaN`.
  *
  * @example
- * ```ts
- * isNumber(123); // true
- * isNumber('123'); // false
- * ```
+ * isNumber(42); // true
+ * isNumber(Infinity); // true
+ * isNumber(NaN); // false
+ * isNumber("foo"); // false
+ *
+ * @remarks Does not exclude `Infinity` or `-Infinity`.
  */
 export function isNumber(value: unknown): value is number {
   return typeof value === "number" && !Number.isNaN(value);
 }
 
 /**
- * A convenience function that asserts a value both {@link isNumber} and is
- * finite in one call.
+ * A convenience wrapper around {@link isNumber} that also checks whether the
+ * value is finite.
+ *
+ * @example
+ * isFiniteNumber(42); // true
+ * isFiniteNumber(Infinity); // false
  */
 export function isFiniteNumber(value: unknown): value is number {
   return isNumber(value) && Number.isFinite(value);
 }
 
 /**
- * Checks if an array of numbers is in ascending order.
+ * Checks whether an array is in ascending order (allowing equal neighbouring values).
  *
- * @param items - The array of numbers to inspect
- * @returns `true` if the array is in ascending order, `false` otherwise
+ * @example
+ * isAscending([1, 1, 2, 3]); // true
+ * isAscending([3, 2, 1]); // false
+ *
+ * @param items - The array of numbers to inspect.
  */
 export function isAscending(items: number[]): boolean {
   // arrays with 0 or 1 elements are trivially sorted
@@ -37,10 +50,13 @@ export function isAscending(items: number[]): boolean {
 }
 
 /**
- * Checks if an array of numbers is in descending order.
+ * Checks whether an array is in descending order (allowing equal neighbouring values).
  *
- * @param items - The array of numbers to inspect
- * @returns `true` if the array is in descending order, `false` otherwise
+ * @example
+ * isDescending([3, 3, 2, 1]); // true
+ * isDescending([1, 2, 3]); // false
+ *
+ * @param items - The array of numbers to inspect.
  */
 export function isDescending(items: number[]): boolean {
   // arrays with 0 or 1 elements are trivially sorted
@@ -49,7 +65,14 @@ export function isDescending(items: number[]): boolean {
   return items.every((x, i, arr) => i === 0 || arr[i - 1]! >= x);
 }
 
-/** Clamps a number between a minimum and maximum value. */
+/**
+ * Constrains a number to an inclusive range.
+ *
+ * @example
+ * clamp(5, 0, 10); // 5
+ * clamp(-5, 0, 10); // 0
+ * clamp(15, 0, 10); // 10
+ */
 export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(value, max));
 }
@@ -57,9 +80,16 @@ export function clamp(value: number, min: number, max: number): number {
 /**
  * Rounds a number to a specified number of fractional digits.
  *
- * @param value - The number to round
- * @param digits - The number of fractional digits to round to
- * @param base - The base to round to (default `10`)
+ * @example
+ * roundToPrecision(3.14159, 2); // 3.14
+ * roundToPrecision(3.005, 2); // 3.01
+ *
+ * @remarks `digits <= 0` behaves like `Math.round()`. `base` defaults to `10`;
+ * most callers should leave it unchanged.
+ *
+ * @param value - The number to round.
+ * @param digits - The number of fractional digits to round to.
+ * @param base - The base to round to (default `10`).
  */
 export function roundToPrecision(
   value: number,
@@ -72,10 +102,16 @@ export function roundToPrecision(
 }
 
 /**
- * Rounds a number to a specified step size.
+ * Rounds a number to the nearest step interval.
  *
- * @param value - The number to round
- * @param step - The step size to round to
+ * @example
+ * roundToStep(5.26, 0.25); // 5.25
+ * roundToStep(-5.26, 0.25); // -5.25
+ *
+ * @remarks Throws for `step = 0` or non-finite step values like `Infinity` and `NaN`.
+ *
+ * @param value - The number to round.
+ * @param step - The step size to round to.
  */
 export function roundToStep(value: number, step: number): number {
   if (step === 0) throw new Error("The `step` cannot be zero.");
@@ -84,12 +120,19 @@ export function roundToStep(value: number, step: number): number {
 }
 
 /**
- * Finds the nearest number in an array to the given value. Tie-breaking is
- * controlled via `bias`.
+ * Returns the closest value from a list, with configurable tie-breaking.
  *
- * @note The sort order of the given `items` is important when using a `bias`
- * of `first` or `last`. It will influence tie-breaking if the nearest value is
- * equidistant from multiple values.
+ * @example
+ * const items = [1, 3, 5, 7, 9];
+ *
+ * findNearest(4, items); // 3 (default bias: "first")
+ * findNearest(4, items, "last"); // 5
+ * findNearest(4, items, "smaller"); // 3
+ * findNearest(4, items, "larger"); // 5
+ *
+ * @remarks Bias options: `"first"` / `"last"` prefer the item that appears earlier
+ * or later in the array; `"smaller"` / `"larger"` prefer the numerically smaller
+ * or larger tied value. Throws if `items` is empty.
  */
 // This is O(n) but it's not like we're computing arrays with millions of items,
 // it'll be fine. Intentional design decision to avoid sorting items, which
@@ -139,18 +182,20 @@ export function findNearest(
 }
 
 /**
- * Generate a sequence of numbers, in ascending or descending order. Floating
- * point precision is inferred from the `step` provided.
+ * Generates inclusive numeric sequences in ascending or descending order.
  *
  * @example
- * ```ts
- * sequence(0, 1, 0.25) // [0, 0.25, 0.5, 0.75, 1]
- * sequence(10, 0, 3)   // [10, 7, 4, 1]
- * ```
+ * sequence(1, 5); // [1, 2, 3, 4, 5]
+ * sequence(5, 1); // [5, 4, 3, 2, 1]
+ * sequence(0, 1, 0.33); // [0, 0.33, 0.66, 0.99]
  *
- * @param start The start of the sequence.
- * @param end The end of the sequence.
- * @param step The size of the step. Default is `1`.
+ * @remarks Includes both start and end when reachable by step increments. Supports
+ * negative step input (uses absolute step size). Derives decimal precision from
+ * the provided step. Throws for `step = 0` or non-finite step values.
+ *
+ * @param start - The start of the sequence.
+ * @param end - The end of the sequence.
+ * @param step - The size of the step. Default is `1`.
  */
 export function sequence(
   start: number,
@@ -180,41 +225,31 @@ export function sequence(
   return result;
 }
 
-// Interpolation ---------------------------------------------------------------
-
 /**
- * Linear interpolation is a method for finding a value between two points on a
- * straight line.
+ * Linear interpolation between two values.
  *
  * @example
- * ```ts
- * lerp(100, 200, 0.5) // 150
- * ```
+ * lerp(0, 100, 0.25); // 25
  *
- * @param from - The start of the range
- * @param to - The end of the range
- * @param value - The value to interpolate
- *
- * @returns The interpolated value between `from` and `to`.
+ * @param from - The start of the range.
+ * @param to - The end of the range.
+ * @param value - The interpolation factor (0–1).
  */
 export function lerp(from: number, to: number, value: number) {
   return from * (1 - value) + to * value;
 }
 
 /**
- * Inverse linear interpolation is a method for finding the interpolation factor
- * (t) between two points on a straight line.
+ * Inverse interpolation that returns a clamped factor in the `0..1` range.
  *
  * @example
- * ```ts
- * unlerp(100, 200, 150) // 0.5
- * ```
+ * unlerp(0, 100, 25); // 0.25
+ * unlerp(0, 10, -5); // 0 (clamped)
+ * unlerp(0, 10, 15); // 1 (clamped)
  *
- * @param from - The start of the range
- * @param to - The end of the range
- * @param value - The value to interpolate
- *
- * @returns The interpolation factor (0.0-1.0) between `from` and `to`.
+ * @param from - The start of the range.
+ * @param to - The end of the range.
+ * @param value - The value to unlerp.
  */
 export function unlerp(from: number, to: number, value: number) {
   const delta = to - from;
@@ -230,26 +265,24 @@ export function unlerp(from: number, to: number, value: number) {
 }
 
 /**
- * Map a value from one range to another using linear interpolation.
+ * Maps a value from one numeric range to another using linear interpolation.
  *
  * @example
- * ```ts
- * remap(5, [0, 10], [0, 100]) // 50
- * ```
+ * remap(5, [0, 10], [0, 100]); // 50
+ * remap(-5, [-10, 0], [0, 100]); // 50
+ * remap(7.5, [0, 10], [-20, -10]); // -12.5
+ * remap(-5, [0, 10], [0, 100]); // 0 (clamped)
+ * remap(15, [0, 10], [0, 100]); // 100 (clamped)
+ * remap(15, [0, 10], [0, 100], { clamp: false }); // 150
  *
- * @example
- * ```ts
- * const rect = target.getBoundingClientRect()
- * const offset = remap(window.scrollY, [rect.top, rect.bottom], [0, rect.height])
- * target.style.transform = `translateY(${offset}px)`
- * ```
+ * @remarks Clamps to the output range by default. Supports negative and
+ * floating-point ranges. Allows extrapolation with `{ clamp: false }`.
+ * Handles degenerate input ranges (`from === to`) predictably.
  *
- * @param value - The value to map
- * @param inputRange - A linear series of numbers (ascending or descending)
- * @param outputRange - A numeric array of the same length as the input range
+ * @param value - The value to map.
+ * @param inputRange - A two-element numeric range.
+ * @param outputRange - A numeric range of the same length as the input range.
  * @param options.clamp - Whether to clamp the value to the output range. Defaults to `true`.
- *
- * @returns The mapped value between `outputRange[0]` and `outputRange[1]`.
  */
 export function remap(
   value: number,

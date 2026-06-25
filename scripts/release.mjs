@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const LIB_PACKAGE_DIR = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "packages",
+  "lil-libs",
+);
 
 const ALLOWED_RELEASE_TYPES = new Set(["patch", "minor", "major"]);
 
@@ -24,7 +34,7 @@ const shouldPush = !flags.has("--no-push");
 try {
   ensureCleanGitTree();
 
-  run("npm", ["version", releaseType]);
+  run("npm", ["version", releaseType], { cwd: LIB_PACKAGE_DIR });
 
   const version = getPackageVersion();
 
@@ -52,7 +62,7 @@ Examples:
   pnpm release major -- --no-push
 
 Notes:
-  - Uses npm version under the hood, so it creates a release commit and git tag.
+  - Bumps version in packages/lil-libs via npm version (creates release commit and git tag).
   - By default it pushes commit + tags via git push --follow-tags.
 `);
 
@@ -71,14 +81,19 @@ function ensureCleanGitTree() {
   }
 }
 
-function run(command, commandArgs) {
-  execFileSync(command, commandArgs, { stdio: "inherit" });
+function run(command, commandArgs, options = {}) {
+  execFileSync(command, commandArgs, { stdio: "inherit", ...options });
 }
 
 function getPackageVersion() {
-  const raw = execFileSync("npm", ["pkg", "get", "version"], {
-    encoding: "utf8",
-  }).trim();
+  const packageJsonPath = join(LIB_PACKAGE_DIR, "package.json");
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 
-  return raw.replaceAll('"', "");
+  if (typeof packageJson.version !== "string") {
+    throw new Error(
+      "Could not read version from packages/lil-libs/package.json",
+    );
+  }
+
+  return packageJson.version;
 }

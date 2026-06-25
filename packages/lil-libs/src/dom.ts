@@ -1,3 +1,9 @@
+/**
+ * DOM utilities: element guards, queries, styles, scroll, and ARIA helpers.
+ *
+ * @module
+ */
+
 import type { Maybe } from "./types";
 
 const KEYBOARD_INPUTS = new Set([
@@ -14,8 +20,19 @@ const KEYBOARD_INPUTS = new Set([
 ]);
 
 /**
- * Checks if the given `target` is an HTMLInputElement that can invoke the
- * software keyboard on touch devices.
+ * Checks whether an event target is an element that can trigger the software
+ * keyboard on mobile devices.
+ *
+ * @example
+ * const textInput = document.createElement("input");
+ * textInput.type = "text";
+ *
+ * const checkbox = document.createElement("input");
+ * checkbox.type = "checkbox";
+ *
+ * isKeyboardInput(textInput); // true
+ * isKeyboardInput(checkbox); // false
+ * isKeyboardInput(document.createElement("textarea")); // true
  */
 export function isKeyboardInput(
   target: EventTarget | null | undefined,
@@ -31,23 +48,29 @@ function isInputElement(target: unknown): target is HTMLInputElement {
 }
 
 /**
- * Checks if the given value is an HTML element. Helps with type inference
- * quirks when working with DOM element APIs.
+ * Type guard for narrowing unknown values to `HTMLElement`.
  *
  * @example
- * let el = document.querySelector(...)
- * if (el) el.tabIndex = -1 // Property 'tabIndex' does not exist on type 'Element'
- *
- * let el = document.querySelector(...)
- * if (isHtmlElement(el)) el.tabIndex = -1 // No error!
+ * const el = document.querySelector("#app");
+ * if (isHtmlElement(el)) {
+ *   el.tabIndex = -1;
+ * }
  */
 export function isHtmlElement(value: unknown): value is HTMLElement {
   return typeof HTMLElement !== "undefined" && value instanceof HTMLElement;
 }
 
 /**
- * Thin wrapper around the `Element.querySelector()` method, which qualifies the
- * returned value as an HTMLElement.
+ * Thin wrapper around `Element.querySelector()` that qualifies the returned
+ * value as an `HTMLElement`.
+ *
+ * @example
+ * const container = document.createElement("div");
+ * container.innerHTML = "<button>Save</button><svg><circle /></svg>";
+ *
+ * querySelector(container, "button"); // HTMLButtonElement
+ * querySelector(container, "circle"); // null (non-HTMLElement)
+ * querySelector(null, "button"); // null
  */
 export function querySelector(
   el: Maybe<HTMLElement>,
@@ -59,8 +82,16 @@ export function querySelector(
 }
 
 /**
- * Thin wrapper around the `Element.querySelectorAll()` method, which transforms the
- * NodeList of Elements into an array of HTMLElements.
+ * Thin wrapper around `Element.querySelectorAll()` that returns `HTMLElement[]`
+ * instead of `NodeListOf<Element>`.
+ *
+ * @example
+ * const container = document.createElement("div");
+ * container.innerHTML = "<span>One</span><span>Two</span><svg><circle /></svg>";
+ *
+ * querySelectorAll(container, "span"); // [HTMLSpanElement, HTMLSpanElement]
+ * querySelectorAll(container, "span, circle"); // spans only
+ * querySelectorAll(undefined, "span"); // []
  */
 export function querySelectorAll(
   el: Maybe<HTMLElement>,
@@ -75,12 +106,17 @@ export function querySelectorAll(
 }
 
 /**
- * Gets the computed style value for a CSS property on an element.
- * Handles both standard CSS properties and CSS custom properties (variables).
+ * Returns a computed style value for regular CSS properties and CSS variables.
  *
- * @param element - The HTML or SVG element to get styles from
- * @param name - The CSS property name (camelCase for standard properties, --name for CSS variables)
- * @returns The computed style value as a string
+ * @example
+ * const el = document.createElement("div");
+ *
+ * getComputedStyle(el, "color"); // e.g. "rgb(0, 0, 0)"
+ * getComputedStyle(el, "line-height"); // e.g. "normal"
+ * getComputedStyle(el, "--space-10"); // custom property value
+ *
+ * @param element - The HTML or SVG element to get styles from.
+ * @param name - CSS property name (camelCase) or `--custom-property`.
  */
 export function getComputedStyle(
   element: HTMLElement | SVGElement,
@@ -107,8 +143,15 @@ function isCssVarName(name: string) {
 }
 
 /**
- * Walks up the DOM tree to find the nearest computed style value for a given
- * CSS property.
+ * Walks up the parent chain until it finds a non-empty computed style value.
+ *
+ * @example
+ * const parent = document.createElement("div");
+ * const child = document.createElement("span");
+ * parent.appendChild(child);
+ *
+ * nearestComputedStyle(child, "color");
+ * // value from child if present, otherwise nearest parent value
  *
  * @see {@link getComputedStyle}
  */
@@ -123,10 +166,13 @@ export function nearestComputedStyle(
 }
 
 /**
- * Returns true if the device is capable of touch input.
+ * Returns `true` when the device can receive touch input.
  *
- * @note Some devices support both touch and mouse input, such as laptop computers
- * with a touchscreen.
+ * @example
+ * isTouchCapable(); // true on touch-capable devices, otherwise false
+ *
+ * @remarks Some devices support both touch and mouse input, such as laptop
+ * computers with a touchscreen.
  */
 export function isTouchCapable() {
   if (typeof window === "undefined") return false;
@@ -134,8 +180,10 @@ export function isTouchCapable() {
 }
 
 /**
- * Returns true if the primary input mechanism includes a pointing device of
- * limited accuracy, such as a finger on a touchscreen.
+ * Returns `true` when the primary pointer is "coarse" (for example, touch input).
+ *
+ * @example
+ * isTouchDevice(); // true on coarse-pointer devices, otherwise false
  */
 export function isTouchDevice() {
   if (typeof window === "undefined") return false;
@@ -148,10 +196,14 @@ export function isTouchDevice() {
 }
 
 /**
- * Returns the display mode of the current page. For PWA instances, this will
- * return 'standalone' if the page is running in a standalone app.
+ * Returns the current display mode for browser and PWA contexts.
  *
- * @note Assumes 'browser' if the `window` object is not yet available.
+ * Possible values: `"fullscreen"`, `"minimal-ui"`, `"picture-in-picture"`,
+ * `"standalone"`, `"window-controls-overlay"`, `"browser"`.
+ *
+ * @example
+ * getDisplayMode();
+ * // e.g. "browser" in a tab, "standalone" in an installed PWA
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/display-mode
  */
@@ -171,8 +223,25 @@ export function getDisplayMode() {
 }
 
 /**
- * Transforms an object of properties into HTML data attributes. Basically just
- * converts keys to kebab-case, with some optimisations and extra functionality.
+ * Converts object keys to HTML `data-*` attributes.
+ *
+ * @example
+ * toDataAttributes({
+ *   isSelected: true,
+ *   panelIndex: 2,
+ *   count: 0,
+ *   empty: "",
+ * });
+ * // {
+ * //   "data-selected": true,
+ * //   "data-panel-index": 2,
+ * //   "data-count": 0,
+ * // }
+ *
+ * @remarks Converts camelCase keys to kebab-case. Omits `null` and `undefined`
+ * values. Omits `false` and `""` by default. Preserves `0` values. Trims
+ * leading `is` from boolean-style keys by default (only when followed by an
+ * uppercase letter).
  */
 export function toDataAttributes<T extends object>(
   props: T,
@@ -237,9 +306,11 @@ export function toDataAttributes<T extends object>(
  * ariaCurrent('/about/team', '/about') // 'true'
  * ariaCurrent('/contact', '/about') // 'false'
  *
- * @param pathname - The current pathname.
- * @param href - The item's href.
- * @returns 'page' if the pathname exactly matches the href, 'true' if the pathname is a child of the href, and 'false' otherwise.
+ * ariaCurrent('/about-us', '/about'); // 'false' (not a child match)
+ *
+ * @remarks Returns `"page"` for exact path matches. Returns `"true"` for child
+ * routes. Returns `"false"` for non-matches and null pathnames. Normalizes
+ * trailing slashes (except root) before matching.
  */
 export function ariaCurrent(pathname: string | null, href: string) {
   if (!pathname) return "false";
@@ -269,8 +340,15 @@ function normalizePath(path: string) {
 }
 
 /**
- * Thin wrapper around `join()` that filters out “falsy” values and returns
- * `undefined` if the result is empty.
+ * Joins IDs for ARIA attributes like `aria-labelledby` and `aria-describedby`.
+ *
+ * @example
+ * joinIds("title-id", "description-id"); // "title-id description-id"
+ * joinIds("title-id", null, undefined, "", false, "description-id"); // "title-id description-id"
+ * joinIds(null, undefined, "", false); // undefined
+ *
+ * @remarks Filters out falsy values (`null`, `undefined`, `false`, `""`). Returns
+ * `undefined` when no valid IDs remain.
  */
 export function joinIds(...ids: (string | undefined | null | false)[]) {
   // cheap length check before filtering
@@ -289,8 +367,13 @@ export function joinIds(...ids: (string | undefined | null | false)[]) {
 // Scroll ----------------------------------------------------------------------
 
 /**
- * A thin wrapper around `Element.getBoundingClientRect()` that offsets the
- * current document scroll, returning an object with absolute coordinates.
+ * Returns `getBoundingClientRect()` values offset by document scroll, giving
+ * absolute page coordinates.
+ *
+ * @example
+ * const rect = getAbsoluteClientRect(document.body);
+ * rect.top;
+ * rect.left;
  */
 export function getAbsoluteClientRect(el: Element) {
   const rect = el.getBoundingClientRect();
@@ -306,11 +389,12 @@ export function getAbsoluteClientRect(el: Element) {
   };
 }
 
-/** Check if an element has horizontal scroll. */
+/** Checks whether an element has horizontal overflow. */
 export function hasScrollX(el: Element) {
   return el.scrollWidth !== el.clientWidth;
 }
-/** Check if an element has vertical scroll. */
+
+/** Checks whether an element has vertical overflow. */
 export function hasScrollY(el: Element) {
   return el.scrollHeight !== el.clientHeight;
 }
@@ -318,19 +402,38 @@ export function hasScrollY(el: Element) {
 // NOTE: rather than equality checks, less-than/greater-than are used because
 // of elastic scrolling — the “rubber band” effect on iOS.
 
-/** Check if an element is scrolled to the top. */
+/**
+ * Checks whether an element is at the top of its scroll range.
+ *
+ * @remarks Uses `<= 0` to handle elastic scrolling behavior.
+ */
 export function atScrollTop(el: Element) {
   return el.scrollTop <= 0;
 }
-/** Check if an element is scrolled to the bottom. */
+
+/**
+ * Checks whether an element is at the bottom of its scroll range.
+ *
+ * @remarks Uses `>=` to handle elastic scrolling behavior.
+ */
 export function atScrollBottom(el: Element) {
   return el.scrollTop + el.clientHeight >= el.scrollHeight;
 }
-/** Check if an element is scrolled to the left. */
+
+/**
+ * Checks whether an element is at the left edge of its scroll range.
+ *
+ * @remarks Uses `<= 0` to handle elastic scrolling behavior.
+ */
 export function atScrollLeft(el: Element) {
   return el.scrollLeft <= 0;
 }
-/** Check if an element is scrolled to the right. */
+
+/**
+ * Checks whether an element is at the right edge of its scroll range.
+ *
+ * @remarks Uses `>=` to handle elastic scrolling behavior.
+ */
 export function atScrollRight(el: Element) {
   return el.scrollLeft + el.clientWidth >= el.scrollWidth;
 }

@@ -1,7 +1,17 @@
+/**
+ * String utilities: guards, encoding, formatting, and case conversion.
+ *
+ * @module
+ */
+
 import { isFiniteNumber } from "./number";
 
 /**
- * Guard to check if a value is a string.
+ * Type guard for string values.
+ *
+ * @example
+ * isString("hello"); // true
+ * isString(123); // false
  */
 export function isString(value: unknown): value is string {
   return typeof value === "string";
@@ -11,9 +21,13 @@ export function isString(value: unknown): value is string {
  * Check if a string contains another string, ignoring diacritic marks and case.
  *
  * @example
- * contains('hello world', 'hëlló'); // true
- * contains('hello world', 'WORLD'); // true
- * contains('hello world', 'foo'); // false
+ * contains("café", "cafe"); // true
+ * contains("Hello World", "world"); // true
+ * contains("hello", ""); // true
+ * contains("hello", "bye"); // false
+ *
+ * @remarks Uses `Intl.Collator` with accent-insensitive and case-insensitive
+ * matching. Returns `true` for an empty substring.
  *
  * @param string - The string to search in.
  * @param substring - The substring to search for.
@@ -99,11 +113,14 @@ function commonEnglishPlural(term: string): [singular: string, plural: string] {
  * Encodes a string to base64, optionally creating a data URI.
  *
  * @example
- * base64Encode('Hello')                   // 'SGVsbG8='
- * base64Encode('Hello', 'text/plain')     // 'data:text/plain;base64,SGVsbG8='
- * base64Encode('Hello', 'image/svg+xml')  // 'data:image/svg+xml;base64,SGVsbG8='
+ * base64Encode("hello");
+ * // "aGVsbG8="
  *
- * @note When a `mimeType` of `'image/svg+xml'` is provided, unnecessary whitespace will automatically be removed.
+ * base64Encode("hello", "text/plain");
+ * // "data:text/plain;base64,aGVsbG8="
+ *
+ * @remarks Supports Unicode input. Optimises SVG payload whitespace when
+ * `mimeType` is `"image/svg+xml"`.
  *
  * @param value - The string to encode.
  * @param mimeType - Optionally provide a MIME type to create a data URI.
@@ -192,7 +209,8 @@ function utf8ToBase64(value: string): string {
 type KnownMimeType = 'text/plain' | 'image/svg+xml' | 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp' | 'image/avif';
 type MimeType = KnownMimeType | (string & {});
 
-type InitialsOptions = {
+/** Options for {@link formatInitials}. */
+export type InitialsOptions = {
   /**
    * The maximum number of letters to return.
    * @default 2
@@ -206,13 +224,21 @@ type InitialsOptions = {
 };
 
 /**
- * Returns the appropriate initials for a name.
+ * Returns initials for names with Unicode-aware grapheme support.
  *
  * @example
- * formatInitials('John') // "JO"
- * formatInitials('John Ronald Reuel Tolkien') // "JT"
- * formatInitials('John Ronald Reuel Tolkien', { maxLetters: 3 }) // "JRR"
- * formatInitials('Élodie Durand') // "ÉD"
+ * formatInitials("John Doe"); // "JD"
+ * formatInitials("John Henry Doe"); // "JD"
+ * formatInitials("John Henry Doe", { maxLetters: 3 }); // "JHD"
+ * formatInitials("John Ronald Reuel Tolkien"); // "JT"
+ * formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
+ * formatInitials("Élodie Durand"); // "ÉD"
+ * formatInitials("ilker", { locale: "tr" }); // "İL"
+ * formatInitials("李小龍"); // "李小"
+ *
+ * @remarks Defaults to `maxLetters = 2`. Returns `"?"` for empty or
+ * whitespace-only input. Throws when `maxLetters` is not finite or is less
+ * than `1`.
  */
 export function formatInitials(name: string, options: InitialsOptions = {}) {
   const { maxLetters = 2, locale } = options;
@@ -286,6 +312,9 @@ function alphanumeric(value: string) {
     .trim();
 }
 
+/**
+ * Options for case conversion functions.
+ */
 export type CaseOptions = {
   /**
    * The locale to use for character case conversions.

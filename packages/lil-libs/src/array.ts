@@ -1,8 +1,23 @@
+/**
+ * Array utilities: type guards, chunking, partitioning, and deterministic key selection.
+ *
+ * @module
+ */
+
 import { assert } from "./assert";
 import type { Maybe, TupleOf } from "./types";
 
 /**
- * Checks if an array is non-empty.
+ * Type guard that narrows an array to a non-empty tuple-like type.
+ *
+ * @example
+ * const values: number[] = [1, 2, 3];
+ * if (isPopulatedArray(values)) {
+ *   // values: [number, ...number[]]
+ * }
+ *
+ * @param items - The array to check.
+ * @returns `true` if the array has at least one element.
  */
 export function isPopulatedArray<T>(
   items: Maybe<T[] | readonly T[]>,
@@ -15,11 +30,9 @@ export function isPopulatedArray<T>(
  * the given length.
  *
  * @example
- * const names = ["Alice", "Bob", "Charlie"];
- * const name = names[2]; // string | undefined
- * if (isLength(names, 3)) {
- *   const name = names[2]; // string
- *   const otherName = names[3]; // undefined
+ * const values: number[] = [1, 2, 3];
+ * if (isLength(values, 3)) {
+ *   // values: [number, number, number]
  * }
  *
  * @param arr - The array to check.
@@ -37,8 +50,8 @@ export function isLength<T, N extends number>(
  * Converts a value to `Array`, if it is not already.
  *
  * @example
+ * toArray(null); // []
  * toArray(1); // [1]
- * toArray([1]); // [1]
  * toArray(new Set([1, 2])); // [1, 2]
  *
  * @param value - The value to convert.
@@ -65,7 +78,9 @@ export function toArray<T>(value: T | T[]): T[] {
  * Checks whether a value implements the iterable protocol.
  *
  * @example
- * isIterable(new Set([1, 2])); // true
+ * isIterable(new Map()); // true
+ * isIterable(new Set()); // true
+ * isIterable([]); // true
  * isIterable({}); // false
  *
  * @param value - The value to check.
@@ -86,10 +101,12 @@ export function isIterable(value: unknown): value is Iterable<unknown> {
 /**
  * Splits an array into chunks of the given size.
  *
- * @note The last chunk may be smaller than the given size if the array does not divide evenly.
+ * @remarks The last chunk may be smaller than the given size if the array does not divide evenly.
  *
  * @example
+ * chunk([1, 2, 3, 4], 2); // [[1, 2], [3, 4]]
  * chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]
+ * chunk([], 2); // []
  *
  * @param arr - The array to chunk.
  * @param size - The size of each chunk.
@@ -106,11 +123,18 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  * one with items that do not.
  *
  * @example
- * partition([1, 2, 3, 4], x => x % 2 === 0); // [[2, 4], [1, 3]]
+ * partition([1, 2, 3, 4], (n) => n % 2 === 0);
+ * // [[2, 4], [1, 3]]
+ *
+ * partition(["a", "bb", "ccc"], (s) => s.length > 1);
+ * // [["bb", "ccc"], ["a"]]
+ *
+ * @remarks Returns a 2-item tuple `[matched, unmatched]`. Preserves the original item
+ * order within both output arrays. Passes `(item, index, array)` to the predicate.
  *
  * @param arr - The array to partition.
  * @param predicate - The function to determine which partition an item belongs to.
- * @returns A tuple of two arrays: the first with items that satisfy the predicate, and the second with items that do not.
+ * @returns A tuple of two arrays: matched items first, unmatched items second.
  */
 export function partition<T>(
   arr: T[],
@@ -130,13 +154,19 @@ export function partition<T>(
  * string, based on a stable hash of the string.
  *
  * @example
- * const getColor = createDeterministicKeySelector(['red', 'green', 'blue']);
- * getColor('Albert'); // 'blue'
- * getColor('Barbara'); // 'green'
- * getColor('Charlie'); // 'red'
+ * const colors = ["red", "green", "blue"] as const;
+ * const getColor = createDeterministicKeySelector(colors);
+ *
+ * getColor("Albert"); // 'blue'
+ * getColor("Barbara"); // 'green'
+ * getColor("Charlie"); // 'red'
+ *
+ * @remarks Returns the same key for the same input every time. Preserves literal key
+ * types (for `as const` arrays). Supports empty input strings. Throws if called
+ * with an empty keys array.
  *
  * @param keys - The keys to use for the function.
- * @returns A function that returns an item from the provided array.
+ * @returns A function that deterministically maps a string to one of the provided keys.
  */
 export function createDeterministicKeySelector<
   const T extends readonly string[],

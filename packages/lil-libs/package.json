@@ -1,0 +1,115 @@
+{
+  "name": "@jossmac/lil-libs",
+  "version": "1.4.0",
+  "description": "A collection of little library helpers.",
+  "license": "MIT",
+  "author": "Joss Mackison",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jossmac/lil-libs.git"
+  },
+  "homepage": "https://jossmac.github.io/lil-libs/",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./array": {
+      "types": "./dist/array.d.ts",
+      "import": "./dist/array.js"
+    },
+    "./assert": {
+      "types": "./dist/assert.d.ts",
+      "import": "./dist/assert.js"
+    },
+    "./console": {
+      "types": "./dist/console.d.ts",
+      "import": "./dist/console.js"
+    },
+    "./constants": {
+      "types": "./dist/constants.d.ts",
+      "import": "./dist/constants.js"
+    },
+    "./datetime": {
+      "types": "./dist/datetime.d.ts",
+      "import": "./dist/datetime.js"
+    },
+    "./dom": {
+      "types": "./dist/dom.d.ts",
+      "import": "./dist/dom.js"
+    },
+    "./error": {
+      "types": "./dist/error.d.ts",
+      "import": "./dist/error.js"
+    },
+    "./function": {
+      "types": "./dist/function.d.ts",
+      "import": "./dist/function.js"
+    },
+    "./json": {
+      "types": "./dist/json.d.ts",
+      "import": "./dist/json.js"
+    },
+    "./number": {
+      "types": "./dist/number.d.ts",
+      "import": "./dist/number.js"
+    },
+    "./object": {
+      "types": "./dist/object.d.ts",
+      "import": "./dist/object.js"
+    },
+    "./random": {
+      "types": "./dist/random.d.ts",
+      "import": "./dist/random.js"
+    },
+    "./string": {
+      "types": "./dist/string.d.ts",
+      "import": "./dist/string.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "check": "pnpm check:types && pnpm check:lint && pnpm check:format",
+    "check:types": "tsc --noEmit",
+    "check:lint": "eslint . --ext .ts",
+    "check:format": "prettier --check .",
+    "fix": "pnpm fix:lint && pnpm fix:format",
+    "fix:lint": "eslint . --ext .ts --fix",
+    "fix:format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "pnpm test && pnpm build"
+  },
+  "keywords": [
+    "typescript",
+    "utils",
+    "utilities",
+    "helpers",
+    "type-guards",
+    "frontend",
+    "browser"
+  ],
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "3.2.4",
+    "eslint": "^10.2.1",
+    "jsdom": "^29.0.2",
+    "prettier": "^3.8.3",
+    "tsup": "^8.5.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.59.0",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,39 @@
+body > footer {
+  display: none;
+}
+
+.page-menu a[href="#jossmaclil-libs"] {
+  display: none;
+}
+.tsd-navigation.settings {
+  display: none;
+}
+.tsd-page-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tsd-signature {
+  border-radius: 6%;
+}
+.tsd-page-navigation ul {
+  padding-inline-start: 1.3rem;
+}
+
+@media (min-width: 770px) {
+  .container-main {
+    --dim-container-main-margin-y: 0px;
+  }
+  .col-content,
+  .page-menu {
+    padding-block: 2rem;
+  }
+}
+
+@media (min-width: 770px) {
+  .col-sidebar {
+    max-height: calc(
+      100vh - var(--dim-header-height) - var(--dim-container-main-margin-y)
+    );
+  }
+}

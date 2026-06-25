@@ -21,5 +21,5 @@ export default tseslint.config(
       ],
     },
   },
-  { ignores: ["dist/", "coverage/"] },
+  { ignores: ["**/dist/", "**/coverage/", "packages/docs/dist/"] },
 );
