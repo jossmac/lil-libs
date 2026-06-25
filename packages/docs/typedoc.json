@@ -7,7 +7,7 @@
   "tsconfig": "../lil-libs/tsconfig.json",
   "out": "dist",
   "basePath": "/lil-libs",
-  "readme": "../lil-libs/README.md",
+  "readme": "../../README.md",
   "plugin": [
     "typedoc-github-theme",
     "./plugin/dedupe-overload-comments.mjs",

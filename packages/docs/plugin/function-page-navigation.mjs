@@ -141,7 +141,9 @@ function normalizePageNavigation(html) {
   }
 
   const list = `<ul>${links
-    .map((link) => `<li><a href="${link.href}"><span>${link.text}</span></a></li>`)
+    .map(
+      (link) => `<li><a href="${link.href}"><span>${link.text}</span></a></li>`,
+    )
     .join("")}</ul>`;
 
   return html.replace(navMatch[0], `${open}${list}${close}`);

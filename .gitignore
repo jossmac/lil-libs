@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Generated at publish time from root README
+packages/lil-libs/README.md
+
 # Build outputs
 dist/
 build/

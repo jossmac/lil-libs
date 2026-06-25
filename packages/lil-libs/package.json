@@ -89,7 +89,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "pnpm test && pnpm build"
+    "prepublishOnly": "cp ../../README.md README.md && pnpm test && pnpm build"
   },
   "keywords": [
     "typescript",
