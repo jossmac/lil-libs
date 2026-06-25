@@ -29,7 +29,6 @@ import type { Maybe, Prettify } from "@jossmac/lil-libs/types";
 - `dom`
 - `error`
 - `function`
-- `json`
 - `number`
 - `object`
 - `random`

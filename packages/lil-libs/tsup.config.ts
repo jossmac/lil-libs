@@ -10,7 +10,6 @@ export default defineConfig({
     "src/dom.ts",
     "src/error.ts",
     "src/function.ts",
-    "src/json.ts",
     "src/number.ts",
     "src/object.ts",
     "src/random.ts",

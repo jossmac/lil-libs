@@ -52,10 +52,6 @@
       "types": "./dist/function.d.ts",
       "import": "./dist/function.js"
     },
-    "./json": {
-      "types": "./dist/json.d.ts",
-      "import": "./dist/json.js"
-    },
     "./number": {
       "types": "./dist/number.d.ts",
       "import": "./dist/number.js"
