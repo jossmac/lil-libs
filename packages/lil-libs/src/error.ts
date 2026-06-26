@@ -16,6 +16,9 @@ export const UNKNOWN_ERROR_MESSAGE = "An unknown error occurred.";
  * @example
  * isError(new Error("boom")); // true
  * isError("boom"); // false
+ *
+ * @param value - Unknown value to test.
+ * @returns `true` when `value` is an `Error` instance.
  */
 export function isError(value: unknown): value is Error {
   return value instanceof Error;
@@ -28,7 +31,8 @@ export function isError(value: unknown): value is Error {
  * isErrorLike({ message: "boom" }); // true
  * isErrorLike({ message: 123 }); // false
  *
- * @returns `true` if the value is a native `Error` or an object with a string `message`.
+ * @param value - Unknown value to test.
+ * @returns `true` for native `Error` instances or plain objects with a string `message` property.
  */
 export function isErrorLike(
   value: unknown,
@@ -39,6 +43,10 @@ export function isErrorLike(
 /**
  * Returns a human-readable error message from unknown input.
  *
+ * For native `Error` values, uses `error.message`. For error-like objects with a
+ * string `message`, uses `value.message`. String inputs are returned as-is. All other
+ * values receive the fallback message.
+ *
  * @example
  * parseError(new Error("Boom")); // "Boom"
  * parseError("Something went wrong"); // "Something went wrong"
@@ -47,13 +55,9 @@ export function isErrorLike(
  * parseError({ message: 123 }); // "An unknown error occurred."
  * parseError(null, "Custom fallback"); // "Custom fallback"
  *
- * @remarks Returns `error.message` for native `Error` values. Returns
- * `value.message` for error-like objects where `message` is a string. Returns
- * string inputs as-is. Returns a fallback message for all other values.
- *
- * @param value - Any value that may represent an error.
- * @param fallbackMessage - Message to use when no message can be extracted.
- * @returns A safe, display-ready error message.
+ * @param value - Thrown value or error payload: native `Error`, error-like object, string, or anything else.
+ * @param fallbackMessage - Message returned when `value` has no extractable message. Defaults to {@link UNKNOWN_ERROR_MESSAGE}.
+ * @returns `value.message` for errors and error-like objects; strings as-is; otherwise `fallbackMessage`.
  */
 export function parseError(
   value: unknown,
@@ -68,17 +72,17 @@ export function parseError(
 /**
  * Returns an `Error` instance from unknown thrown input.
  *
+ * Returns the input unchanged when it is already an `Error`. Wraps strings in a new
+ * `Error`. For error-like objects, copies `message` and preserves `name`/`stack` when
+ * present.
+ *
  * @example
  * ensureError(new Error("boom")); // same Error instance
  * ensureError("boom"); // Error("boom")
  * ensureError({ message: "boom", name: "CustomError" }); // Error with copied metadata
  *
- * @remarks Returns the input unchanged when it is already an `Error`. Wraps
- * strings in a new `Error`. For error-like objects, copies `message` and
- * preserves `name`/`stack` when present.
- *
- * @param error - Unknown thrown value.
- * @returns An `Error` instance suitable for logging and rethrowing.
+ * @param error - Unknown thrown value from a `catch` block or Promise rejection.
+ * @returns The same `Error` when already an instance; a new `Error` for strings and error-like objects (copying `name`/`stack` when present); a serialized fallback for other values.
  */
 export function ensureError(error: unknown): Error {
   if (isError(error)) return error;

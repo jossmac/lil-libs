@@ -19,7 +19,8 @@ type ObjectEntry<T> = { [K in keyof T]: [K, T[K]] }[keyof T];
  * isPlainObject([]); // false
  * isPlainObject(new Date()); // false
  *
- * @param value - The value to check.
+ * @param value - Unknown value to test.
+ * @returns `true` for objects whose prototype is `Object.prototype` or `null` (including `Object.create(null)`); `false` for arrays, class instances, and non-objects.
  */
 export function isPlainObject(value: unknown): value is UnknownRecord {
   if (value === null || typeof value !== "object") {
@@ -50,6 +51,9 @@ export const TObject = {
  * const obj = { foo: 1, bar: "hello" };
  * const keys = typedKeys(obj);
  * //    ^? ("foo" | "bar")[]
+ *
+ * @param value - Object whose own enumerable string keys to collect.
+ * @returns An array typed as `(keyof T)[]` rather than `string[]`.
  */
 export function typedKeys<T extends object>(value: T) {
   return Object.keys(value) as Array<keyof T>;
@@ -65,6 +69,10 @@ export function typedKeys<T extends object>(value: T) {
  * //    ^? ["foo" | "bar", ...("foo" | "bar")[]]
  *
  * populatedKeys({}); // throws "Object has no keys."
+ *
+ * @param value - Object that must have at least one own enumerable key.
+ * @returns Same keys as {@link typedKeys}, narrowed to a non-empty tuple type.
+ * @throws When `value` has no own enumerable keys.
  */
 export function populatedKeys<T extends object>(
   value: T,
@@ -81,6 +89,9 @@ export function populatedKeys<T extends object>(
  * const obj = { foo: 1, bar: "hello" };
  * const entries = typedEntries(obj);
  * //    ^? (["foo", number] | ["bar", string])[]
+ *
+ * @param value - Object whose own enumerable entries to collect.
+ * @returns `[key, value]` tuples with preserved keyof/value types instead of `[string, any][]`.
  */
 export function typedEntries<T extends object>(value: T) {
   return Object.entries(value) as ObjectEntry<T>[];
@@ -96,6 +107,9 @@ export function typedEntries<T extends object>(value: T) {
  * ] as const;
  * const rebuilt = typedFromEntries(entries);
  * //    ^? { foo: number; bar: string }
+ *
+ * @param entries - Key-value pairs to assemble into an object.
+ * @returns An object whose keys and value types are inferred from the `entries` tuple.
  */
 export function typedFromEntries<
   const Entries extends ReadonlyArray<readonly [PropertyKey, unknown]>,

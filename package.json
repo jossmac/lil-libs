@@ -4,6 +4,7 @@
   "description": "Monorepo for @jossmac/lil-libs and its documentation.",
   "license": "MIT",
   "author": "Joss Mackison",
+  "homepage": "https://jossmac.github.io/lil-libs/",
   "repository": {
     "type": "git",
     "url": "https://github.com/jossmac/lil-libs.git"

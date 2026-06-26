@@ -33,6 +33,9 @@ const KEYBOARD_INPUTS = new Set([
  * isKeyboardInput(textInput); // true
  * isKeyboardInput(checkbox); // false
  * isKeyboardInput(document.createElement("textarea")); // true
+ *
+ * @param target - Event target to test, typically from a DOM event's `target` property.
+ * @returns `true` for text-like `<input>` types and `<textarea>` elements that open the software keyboard on mobile; `false` otherwise.
  */
 export function isKeyboardInput(
   target: EventTarget | null | undefined,
@@ -55,6 +58,9 @@ function isInputElement(target: unknown): target is HTMLInputElement {
  * if (isHtmlElement(el)) {
  *   el.tabIndex = -1;
  * }
+ *
+ * @param value - Unknown value to narrow (e.g. from `querySelector`).
+ * @returns `true` when `value` is an `HTMLElement` instance; `false` in non-DOM environments or for other node types.
  */
 export function isHtmlElement(value: unknown): value is HTMLElement {
   return typeof HTMLElement !== "undefined" && value instanceof HTMLElement;
@@ -71,6 +77,10 @@ export function isHtmlElement(value: unknown): value is HTMLElement {
  * querySelector(container, "button"); // HTMLButtonElement
  * querySelector(container, "circle"); // null (non-HTMLElement)
  * querySelector(null, "button"); // null
+ *
+ * @param el - Root element to search within. Returns `null` when `el` is nullish.
+ * @param selector - CSS selector passed to `Element.querySelector`.
+ * @returns The first matching `HTMLElement`, or `null` if none is found or the match is not an `HTMLElement` (e.g. SVG elements).
  */
 export function querySelector(
   el: Maybe<HTMLElement>,
@@ -92,6 +102,10 @@ export function querySelector(
  * querySelectorAll(container, "span"); // [HTMLSpanElement, HTMLSpanElement]
  * querySelectorAll(container, "span, circle"); // spans only
  * querySelectorAll(undefined, "span"); // []
+ *
+ * @param el - Root element to search within. Returns `[]` when `el` is nullish.
+ * @param selector - CSS selector passed to `Element.querySelectorAll`.
+ * @returns All matching `HTMLElement` nodes; non-HTML matches (e.g. SVG) are filtered out.
  */
 export function querySelectorAll(
   el: Maybe<HTMLElement>,
@@ -115,8 +129,9 @@ export function querySelectorAll(
  * getComputedStyle(el, "line-height"); // e.g. "normal"
  * getComputedStyle(el, "--space-10"); // custom property value
  *
- * @param element - The HTML or SVG element to get styles from.
- * @param name - CSS property name (camelCase) or `--custom-property`.
+ * @param element - HTML or SVG element whose computed styles to read.
+ * @param name - CSS property in camelCase (e.g. `"lineHeight"`) or a custom property (e.g. `"--space-10"`).
+ * @returns The computed value as a string; custom properties use `getPropertyValue`, standard properties prefer direct `CSSStyleDeclaration` access.
  */
 export function getComputedStyle(
   element: HTMLElement | SVGElement,
@@ -153,6 +168,10 @@ function isCssVarName(name: string) {
  * nearestComputedStyle(child, "color");
  * // value from child if present, otherwise nearest parent value
  *
+ * @param element - Starting element, or `null` to return `undefined`.
+ * @param name - CSS property or custom property name (same format as {@link getComputedStyle}).
+ * @returns The first non-empty computed value on `element` or an ancestor; `undefined` when `element` is null or no ancestor has a value.
+ *
  * @see {@link getComputedStyle}
  */
 export function nearestComputedStyle(
@@ -168,11 +187,12 @@ export function nearestComputedStyle(
 /**
  * Returns `true` when the device can receive touch input.
  *
+ * Some devices support both touch and mouse input, such as laptops with a touchscreen.
+ *
  * @example
  * isTouchCapable(); // true on touch-capable devices, otherwise false
  *
- * @remarks Some devices support both touch and mouse input, such as laptop
- * computers with a touchscreen.
+ * @returns `true` when the environment reports touch support via `ontouchstart` or `navigator.maxTouchPoints`; `false` outside the browser.
  */
 export function isTouchCapable() {
   if (typeof window === "undefined") return false;
@@ -184,6 +204,8 @@ export function isTouchCapable() {
  *
  * @example
  * isTouchDevice(); // true on coarse-pointer devices, otherwise false
+ *
+ * @returns `true` when `(pointer: coarse)` matches, or when {@link isTouchCapable} succeeds as a fallback; `false` outside the browser.
  */
 export function isTouchDevice() {
   if (typeof window === "undefined") return false;
@@ -205,6 +227,8 @@ export function isTouchDevice() {
  * getDisplayMode();
  * // e.g. "browser" in a tab, "standalone" in an installed PWA
  *
+ * @returns The current `display-mode` (`"fullscreen"`, `"standalone"`, etc.), or `"browser"` when no media query matches or outside the browser.
+ *
  * @see https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/display-mode
  */
 export function getDisplayMode() {
@@ -225,6 +249,10 @@ export function getDisplayMode() {
 /**
  * Converts object keys to HTML `data-*` attributes.
  *
+ * CamelCase keys become kebab-case. Omits `null` and `undefined` values, and omits
+ * `false` and `""` by default. Preserves `0` values. Trims the leading `is` from
+ * boolean-style keys by default (only when followed by an uppercase letter).
+ *
  * @example
  * toDataAttributes({
  *   isSelected: true,
@@ -238,10 +266,9 @@ export function getDisplayMode() {
  * //   "data-count": 0,
  * // }
  *
- * @remarks Converts camelCase keys to kebab-case. Omits `null` and `undefined`
- * values. Omits `false` and `""` by default. Preserves `0` values. Trims
- * leading `is` from boolean-style keys by default (only when followed by an
- * uppercase letter).
+ * @param props - Object whose keys become `data-*` attribute names (camelCase → kebab-case).
+ * @param options - Controls omission of falsy values and trimming of `is*` prefixes from boolean-style keys.
+ * @returns A record of `data-*` keys to values ready for spreading onto a DOM element.
  */
 export function toDataAttributes<T extends object>(
   props: T,
@@ -299,6 +326,12 @@ export function toDataAttributes<T extends object>(
 /**
  * Returns the aria-current value for a given pathname and href.
  *
+ * Behaviour:
+ * - Returns "page" for exact path matches.
+ * - Returns "true" for child routes (for example /about/team under /about).
+ * - Returns "false" for non-matches and null pathnames.
+ * - Normalizes trailing slashes (except root) before matching.
+ *
  * @see https://www.w3.org/TR/wai-aria-1.2/#aria-current
  *
  * @example
@@ -308,9 +341,9 @@ export function toDataAttributes<T extends object>(
  *
  * ariaCurrent('/about-us', '/about'); // 'false' (not a child match)
  *
- * @remarks Returns `"page"` for exact path matches. Returns `"true"` for child
- * routes. Returns `"false"` for non-matches and null pathnames. Normalizes
- * trailing slashes (except root) before matching.
+ * @param pathname - Current route pathname to test, or `null` for `"false"`.
+ * @param href - Link href to compare against; trailing slashes are normalized (except root `/`).
+ * @returns `"page"` for an exact match, `"true"` when `pathname` is a child route of `href`, otherwise `"false"`.
  */
 export function ariaCurrent(pathname: string | null, href: string) {
   if (!pathname) return "false";
@@ -342,13 +375,15 @@ function normalizePath(path: string) {
 /**
  * Joins IDs for ARIA attributes like `aria-labelledby` and `aria-describedby`.
  *
+ * Filters out falsy values (`null`, `undefined`, `false`, `""`).
+ *
  * @example
  * joinIds("title-id", "description-id"); // "title-id description-id"
  * joinIds("title-id", null, undefined, "", false, "description-id"); // "title-id description-id"
  * joinIds(null, undefined, "", false); // undefined
  *
- * @remarks Filters out falsy values (`null`, `undefined`, `false`, `""`). Returns
- * `undefined` when no valid IDs remain.
+ * @param ids - Element IDs to join; `null`, `undefined`, `false`, and `""` are filtered out.
+ * @returns A space-separated ID string for `aria-labelledby` / `aria-describedby`, or `undefined` when no valid IDs remain.
  */
 export function joinIds(...ids: (string | undefined | null | false)[]) {
   // cheap length check before filtering
@@ -374,6 +409,9 @@ export function joinIds(...ids: (string | undefined | null | false)[]) {
  * const rect = getAbsoluteClientRect(document.body);
  * rect.top;
  * rect.left;
+ *
+ * @param el - Element to measure.
+ * @returns A `DOMRect`-like object with `top`, `left`, etc. offset by `window.scrollX` / `window.scrollY` for page coordinates.
  */
 export function getAbsoluteClientRect(el: Element) {
   const rect = el.getBoundingClientRect();
@@ -389,12 +427,22 @@ export function getAbsoluteClientRect(el: Element) {
   };
 }
 
-/** Checks whether an element has horizontal overflow. */
+/**
+ * Checks whether an element has horizontal overflow.
+ *
+ * @param el - Element to inspect.
+ * @returns `true` when `scrollWidth` exceeds `clientWidth`.
+ */
 export function hasScrollX(el: Element) {
   return el.scrollWidth !== el.clientWidth;
 }
 
-/** Checks whether an element has vertical overflow. */
+/**
+ * Checks whether an element has vertical overflow.
+ *
+ * @param el - Element to inspect.
+ * @returns `true` when `scrollHeight` exceeds `clientHeight`.
+ */
 export function hasScrollY(el: Element) {
   return el.scrollHeight !== el.clientHeight;
 }
@@ -405,7 +453,10 @@ export function hasScrollY(el: Element) {
 /**
  * Checks whether an element is at the top of its scroll range.
  *
- * @remarks Uses `<= 0` to handle elastic scrolling behavior.
+ * Uses `<= 0` rather than strict equality to account for elastic overscroll on iOS.
+ *
+ * @param el - Scrollable element to inspect.
+ * @returns `true` when the element is at the top of its scroll range.
  */
 export function atScrollTop(el: Element) {
   return el.scrollTop <= 0;
@@ -414,7 +465,10 @@ export function atScrollTop(el: Element) {
 /**
  * Checks whether an element is at the bottom of its scroll range.
  *
- * @remarks Uses `>=` to handle elastic scrolling behavior.
+ * Uses `>=` rather than strict equality to account for elastic overscroll on iOS.
+ *
+ * @param el - Scrollable element to inspect.
+ * @returns `true` when the element is at the bottom of its scroll range.
  */
 export function atScrollBottom(el: Element) {
   return el.scrollTop + el.clientHeight >= el.scrollHeight;
@@ -423,7 +477,10 @@ export function atScrollBottom(el: Element) {
 /**
  * Checks whether an element is at the left edge of its scroll range.
  *
- * @remarks Uses `<= 0` to handle elastic scrolling behavior.
+ * Uses `<= 0` rather than strict equality to account for elastic overscroll on iOS.
+ *
+ * @param el - Scrollable element to inspect.
+ * @returns `true` when the element is at the left edge of its scroll range.
  */
 export function atScrollLeft(el: Element) {
   return el.scrollLeft <= 0;
@@ -432,7 +489,10 @@ export function atScrollLeft(el: Element) {
 /**
  * Checks whether an element is at the right edge of its scroll range.
  *
- * @remarks Uses `>=` to handle elastic scrolling behavior.
+ * Uses `>=` rather than strict equality to account for elastic overscroll on iOS.
+ *
+ * @param el - Scrollable element to inspect.
+ * @returns `true` when the element is at the right edge of its scroll range.
  */
 export function atScrollRight(el: Element) {
   return el.scrollLeft + el.clientWidth >= el.scrollWidth;

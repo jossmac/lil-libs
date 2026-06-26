@@ -5,7 +5,8 @@
  */
 
 /**
- * Asserts that a value is present (or that a boolean is `true`).
+ * Asserts that a value is present (or that a boolean is `true`). Narrows types
+ * after the assertion.
  *
  * @example
  * function getName(id: number): string | undefined;
@@ -15,10 +16,9 @@
  * const name = maybeName;
  * //    ^? string
  *
- * @remarks Throws for `false`, `null`, and `undefined`. Does not throw for other
- * falsy values like `0` and `""`. Narrows types after the assertion.
- *
- * @throws If the value is `false`, `null`, or `undefined`.
+ * @param value - Value to assert. For booleans, must be `true`; for other types, must not be `null` or `undefined`. Other falsy values such as `0` and `""` pass.
+ * @param message - Optional error message when the assertion fails. Defaults to `"Assertion failed"`.
+ * @throws If `value` is `false`, `null`, or `undefined`. Does not throw for other falsy values like `0` and `""`.
  */
 export function assert(value: boolean, message?: string): asserts value;
 export function assert<T>(
@@ -44,7 +44,9 @@ export function assert(value: unknown, message?: string) {
  *     assertNever(status.kind);
  * }
  *
- * @throws Always.
+ * @param arg - Exhaustiveness-check value that should be typed `never` when all union cases are handled.
+ * @returns Never — always throws.
+ * @throws Always, with a message that includes the unexpected value.
  */
 export function assertNever(arg: never): never {
   throw new Error(
@@ -62,8 +64,10 @@ export function assertNever(arg: never): never {
  * const user = ensure(findUser(123), "User is required");
  * //    ^? User
  *
- * @returns The original value if it is truthy.
- * @throws If the value is `false`, `null`, or `undefined`.
+ * @param value - Value to assert present or true. Same rules as {@link assert}.
+ * @param message - Optional error message when the assertion fails. Defaults to `"Assertion failed"`.
+ * @returns The asserted `value`, narrowed to `T`.
+ * @throws If `value` is `false`, `null`, or `undefined`.
  */
 export function ensure<T>(
   value: T | false | null | undefined,

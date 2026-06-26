@@ -12,6 +12,9 @@ import { isFiniteNumber } from "./number";
  * @example
  * isString("hello"); // true
  * isString(123); // false
+ *
+ * @param value - Unknown value to test.
+ * @returns `true` when `value` is a string.
  */
 export function isString(value: unknown): value is string {
   return typeof value === "string";
@@ -20,19 +23,19 @@ export function isString(value: unknown): value is string {
 /**
  * Check if a string contains another string, ignoring diacritic marks and case.
  *
+ * Uses `Intl.Collator` for accent-insensitive, case-insensitive matching. Returns
+ * `true` for an empty substring.
+ *
  * @example
  * contains("café", "cafe"); // true
  * contains("Hello World", "world"); // true
  * contains("hello", ""); // true
  * contains("hello", "bye"); // false
  *
- * @remarks Uses `Intl.Collator` with accent-insensitive and case-insensitive
- * matching. Returns `true` for an empty substring.
- *
- * @param string - The string to search in.
- * @param substring - The substring to search for.
- * @param locale - The locale to use for the comparison. Defaults to `'en'`.
- * @returns `true` if the string contains the substring, `false` otherwise.
+ * @param string - Haystack to search within (normalized to NFC before comparison).
+ * @param substring - Needle to find; empty string always matches.
+ * @param locale - Locale for accent- and case-insensitive matching via `Intl.Collator`. Defaults to `"en"`.
+ * @returns `true` when `substring` appears in `string` per collator rules; `false` otherwise.
  */
 export function contains(string: string, substring: string, locale = "en") {
   // normalize both strings to NFC for consistent comparison
@@ -75,10 +78,10 @@ export function contains(string: string, substring: string, locale = "en") {
  * pluralize(1, ['person', 'people'], false); // 'person'
  * pluralize(2, ['person', 'people'], false); // 'people'
  *
- * @param count - The number of items.
- * @param terms - The singular, and optionally plural, forms of the term.
- * @param includeCount - Whether to include the count in the result. Defaults to `true`.
- * @returns The appropriate plural or singular form of the given term(s), prefixed with the count if `includeCount` is true.
+ * @param count - Quantity used to pick singular (`1`) vs plural (any other number, including `0`).
+ * @param terms - Singular string, or `[singular, plural]` tuple; bare strings get a simple English plural (`wallet` → `wallets`).
+ * @param includeCount - When `true` (default), prefixes the result with `"${count} "`; when `false`, returns the word alone.
+ * @returns The chosen singular or plural term, optionally prefixed with the count.
  */
 export function pluralize(
   count: number,
@@ -112,6 +115,9 @@ function commonEnglishPlural(term: string): [singular: string, plural: string] {
 /**
  * Encodes a string to base64, optionally creating a data URI.
  *
+ * Supports Unicode input. Optimises SVG payload whitespace when `mimeType` is
+ * `"image/svg+xml"`.
+ *
  * @example
  * base64Encode("hello");
  * // "aGVsbG8="
@@ -119,12 +125,9 @@ function commonEnglishPlural(term: string): [singular: string, plural: string] {
  * base64Encode("hello", "text/plain");
  * // "data:text/plain;base64,aGVsbG8="
  *
- * @remarks Supports Unicode input. Optimises SVG payload whitespace when
- * `mimeType` is `"image/svg+xml"`.
- *
- * @param value - The string to encode.
- * @param mimeType - Optionally provide a MIME type to create a data URI.
- * @returns The base64 encoded string, or a data URI if `mimeType` is provided.
+ * @param value - UTF-8 string to encode.
+ * @param mimeType - When provided, wraps the payload in a `data:${mimeType};base64,...` URI; SVG payloads are whitespace-minified first.
+ * @returns Raw base64 text, or a data URI when `mimeType` is set.
  */
 export function base64Encode(value: string): string;
 export function base64Encode<M extends MimeType>(
@@ -165,8 +168,8 @@ function reduceSvgWhitespace(value: string): string {
  * 2. `Uint8Array.toBase64` (modern browsers)
  * 3. `TextEncoder` + `btoa` (legacy fallback)
  *
- * @param value - The string to encode.
- * @returns The base64 encoded string.
+ * @param value - UTF-8 string to encode.
+ * @returns Base64 representation; `""` when `value` is empty. Uses `Buffer`, `Uint8Array.toBase64`, or `btoa` in that order.
  */
 function utf8ToBase64(value: string): string {
   if (value.length === 0) return "";
@@ -226,6 +229,9 @@ export type InitialsOptions = {
 /**
  * Returns initials for names with Unicode-aware grapheme support.
  *
+ * Defaults to `maxLetters = 2`. Returns `"?"` for empty or whitespace-only input.
+ * Throws when `maxLetters` is not finite or is less than `1`.
+ *
  * @example
  * formatInitials("John Doe"); // "JD"
  * formatInitials("John Henry Doe"); // "JD"
@@ -236,9 +242,10 @@ export type InitialsOptions = {
  * formatInitials("ilker", { locale: "tr" }); // "İL"
  * formatInitials("李小龍"); // "李小"
  *
- * @remarks Defaults to `maxLetters = 2`. Returns `"?"` for empty or
- * whitespace-only input. Throws when `maxLetters` is not finite or is less
- * than `1`.
+ * @param name - Full name or phrase to abbreviate; punctuation is stripped and whitespace collapsed.
+ * @param options - `maxLetters` (default `2`) and optional `locale` for grapheme segmentation and casing.
+ * @returns Uppercased initials via `Intl.Segmenter` when available; `"?"` for empty input after cleaning.
+ * @throws When `maxLetters` is not finite or is less than `1`.
  */
 export function formatInitials(name: string, options: InitialsOptions = {}) {
   const { maxLetters = 2, locale } = options;
@@ -340,9 +347,9 @@ function splitWords(value: string): string[] {
  * camelCase('--foo-bar--'); // 'fooBar'
  * camelCase('HTMLParser'); // 'htmlParser'
  *
- * @param value - The string to convert.
- * @param options - Options for the conversion.
- * @returns The camelCased string.
+ * @param value - Input split on case transitions, whitespace, and punctuation.
+ * @param options - Optional `locale` for case mapping (defaults to system locale).
+ * @returns Words joined in camelCase (`fooBar`); `""` when no words are detected.
  */
 export function camelCase(value: string, options: CaseOptions = {}): string {
   const { locale } = options;
@@ -370,9 +377,9 @@ export function camelCase(value: string, options: CaseOptions = {}): string {
  * kebabCase('fooBar'); // 'foo-bar'
  * kebabCase('HTMLParser'); // 'html-parser'
  *
- * @param value - The string to convert.
- * @param options - Options for the conversion.
- * @returns The kebab-cased string.
+ * @param value - Input split on case transitions, whitespace, and punctuation.
+ * @param options - Optional `locale` for case mapping (defaults to system locale).
+ * @returns Words joined with `-` in lowercase kebab-case; `""` when no words are detected.
  */
 export function kebabCase(value: string, options: CaseOptions = {}): string {
   const { locale } = options;
@@ -389,9 +396,9 @@ export function kebabCase(value: string, options: CaseOptions = {}): string {
  * pascalCase('foo-bar'); // 'FooBar'
  * pascalCase('HTMLParser'); // 'HtmlParser'
  *
- * @param value - The string to convert.
- * @param options - Options for the conversion.
- * @returns The PascalCased string.
+ * @param value - Input split on case transitions, whitespace, and punctuation.
+ * @param options - Optional `locale` for case mapping (defaults to system locale).
+ * @returns Words concatenated in PascalCase (`FooBar`); `""` when no words are detected.
  */
 export function pascalCase(value: string, options: CaseOptions = {}): string {
   const { locale } = options;
@@ -413,9 +420,9 @@ export function pascalCase(value: string, options: CaseOptions = {}): string {
  * sentenceCase('fooBar'); // 'Foo bar'
  * sentenceCase('HTMLParser'); // 'Html parser'
  *
- * @param value - The string to convert.
- * @param options - Options for the conversion.
- * @returns The sentence-cased string.
+ * @param value - Input split on case transitions, whitespace, and punctuation.
+ * @param options - Optional `locale` for case mapping (defaults to system locale).
+ * @returns First word capitalized, remaining words lowercased, space-separated; `""` when no words are detected.
  */
 export function sentenceCase(value: string, options: CaseOptions = {}): string {
   const { locale } = options;
@@ -443,9 +450,9 @@ export function sentenceCase(value: string, options: CaseOptions = {}): string {
  * snakeCase('foo-bar'); // 'foo_bar'
  * snakeCase('HTMLParser'); // 'html_parser'
  *
- * @param value - The string to convert.
- * @param options - Options for the conversion.
- * @returns The snake_cased string.
+ * @param value - Input split on case transitions, whitespace, and punctuation.
+ * @param options - Optional `locale` for case mapping (defaults to system locale).
+ * @returns Words joined with `_` in lowercase snake_case; `""` when no words are detected.
  */
 export function snakeCase(value: string, options: CaseOptions = {}): string {
   const { locale } = options;
@@ -484,9 +491,9 @@ const MINOR_WORDS = new Set([
  * titleCase('a comparison of cases'); // 'A Comparison of Cases'
  * titleCase('the wind in the willows'); // 'The Wind in the Willows'
  *
- * @param value - The string to convert.
- * @param options - Options for the conversion.
- * @returns The title-cased string.
+ * @param value - Input split on case transitions, whitespace, and punctuation.
+ * @param options - Optional `locale` for case mapping (defaults to system locale).
+ * @returns Title-cased phrase; articles, prepositions, and conjunctions stay lowercase except as the first or last word.
  */
 export function titleCase(value: string, options: CaseOptions = {}): string {
   const { locale } = options;

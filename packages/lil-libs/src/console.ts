@@ -8,8 +8,8 @@
  * Factory function to create a once-only console logging function.
  * Messages are tracked and only logged the first time they are seen.
  *
- * @param logFn - The console method to use (e.g., console.error, console.warn)
- * @returns A function that logs each unique message only once
+ * @param logFn - Console method invoked when a message is logged for the first time (e.g. `console.error`, `console.warn`).
+ * @returns A function that accepts a string message, calls `logFn` once per distinct message, then silently ignores repeats for the lifetime of the closure.
  */
 function createOnceLogger(
   logFn: (message: string) => void,
@@ -30,7 +30,8 @@ function createOnceLogger(
  * errorOnce("API request failed");
  * errorOnce("API request failed"); // ignored
  *
- * @param message - The error message to log
+ * @param message - Error text to log via `console.error`.
+ * @returns Nothing; subsequent calls with the same message are ignored.
  */
 export const errorOnce = createOnceLogger(console.error.bind(console));
 
@@ -41,6 +42,7 @@ export const errorOnce = createOnceLogger(console.error.bind(console));
  * warnOnce("Using fallback value");
  * warnOnce("Using fallback value"); // ignored
  *
- * @param message - The warning message to log
+ * @param message - Warning text to log via `console.warn`.
+ * @returns Nothing; subsequent calls with the same message are ignored.
  */
 export const warnOnce = createOnceLogger(console.warn.bind(console));

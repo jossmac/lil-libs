@@ -21,16 +21,15 @@ export const random = {
 /**
  * Generates random integers in an inclusive range.
  *
+ * Both bounds are inclusive. Reversed bounds are automatically normalised.
+ *
  * @example
  * random.int(1, 3); // 1, 2, or 3
  * random.int(10, 1); // still valid
  *
- * @remarks `random.int(min, max)` is inclusive of both bounds. Reversed bounds are
- * automatically normalised.
- *
- * @param min - The minimum value.
- * @param max - The maximum value.
- * @returns A random integer between `min` and `max`.
+ * @param min - Lower bound (inclusive); swapped with `max` when out of order.
+ * @param max - Upper bound (inclusive); swapped with `min` when out of order.
+ * @returns A uniformly random integer in `[min, max]`.
  */
 function int(min: number, max: number) {
   if (min > max) [min, max] = [max, min];
@@ -40,16 +39,15 @@ function int(min: number, max: number) {
 /**
  * Generates random floating-point numbers in a half-open range.
  *
+ * Reversed bounds are automatically normalised.
+ *
  * @example
  * random.float(10, 20); // 10 <= n < 20
  * random.float(20, 10); // still valid
  *
- * @remarks `random.float(min, max)` is inclusive of `min` and exclusive of `max`.
- * Reversed bounds are automatically normalised.
- *
- * @param min - The minimum value. Defaults to 0.
- * @param max - The maximum value. Defaults to 1.
- * @returns A random floating-point number between `min` and `max`.
+ * @param min - Lower bound (inclusive). Defaults to `0`; swapped with `max` when out of order.
+ * @param max - Upper bound (exclusive). Defaults to `1`; swapped with `min` when out of order.
+ * @returns A uniformly random float in `[min, max)`.
  */
 function float(min = 0, max = 1) {
   if (min > max) [min, max] = [max, min];
@@ -61,6 +59,8 @@ function float(min = 0, max = 1) {
  *
  * @example
  * random.bool(); // true or false
+ *
+ * @returns `true` or `false` with equal probability (~50/50).
  */
 function bool() {
   return Math.random() < 0.5;
@@ -72,8 +72,8 @@ function bool() {
  * @example
  * random.choice(["a", "b", "c"]); // one item
  *
- * @param items - The list of items to choose from.
- * @returns A random item from the array.
+ * @param items - Array to pick from.
+ * @returns One uniformly random element from `items`.
  */
 function choice<T>(items: T[]) {
   return items[random.int(0, items.length - 1)];
@@ -82,19 +82,18 @@ function choice<T>(items: T[]) {
 /**
  * Returns a randomly sampled subset without mutating the original array.
  *
+ * Defaults to `count = 1`. Returns an empty array when `count` is `0`, and all items
+ * when `count` equals the array length.
+ *
  * @example
  * const items = ["a", "b", "c", "d"];
  * random.sample(items, 2); // e.g. ["d", "a"]
  * random.sample(items); // single-item sample
  * random.sample(items, 0); // []
  *
- * @remarks Defaults to `count = 1`. Returns an empty array when `count` is `0`.
- * Returns all items when `count` equals the array length. Never mutates the
- * input array.
- *
- * @param items - The list of items to sample from.
- * @param count - The number of items to sample. Defaults to 1.
- * @returns A random sample of items from the array.
+ * @param items - Source array; not mutated.
+ * @param count - Number of items to take after shuffling. Defaults to `1`; `0` returns `[]`, and values equal to `items.length` return all items.
+ * @returns A new array of up to `count` items in random order (via {@link shuffle}).
  */
 function sample<T>(items: T[], count: number = 1) {
   return random.shuffle(items).slice(0, count);
@@ -108,9 +107,9 @@ function sample<T>(items: T[], count: number = 1) {
  * const sampleTwo = random.sampler(items, 2);
  * sampleTwo(); // random 2-item sample each call
  *
- * @param items - The list of items to sample from.
- * @param count - The number of items to sample. Defaults to 1.
- * @returns A function that returns a random sample of items from the array.
+ * @param items - Source array; captured by the returned function and not mutated.
+ * @param count - Sample size passed to {@link sample} on each call. Defaults to `1`.
+ * @returns A zero-argument function that returns a fresh random sample each time it is called.
  */
 function sampler<T>(items: T[], count: number = 1) {
   return () => random.sample(items, count);
@@ -124,8 +123,8 @@ function sampler<T>(items: T[], count: number = 1) {
  * random.shuffle(items); // shuffled copy
  * items; // unchanged
  *
- * @param items - The array of items to shuffle.
- * @returns A shuffled copy of the array.
+ * @param items - Array to copy and shuffle; the original is not modified.
+ * @returns A Fisher–Yates shuffled copy of `items`.
  */
 function shuffle<T>(items: T[]): T[] {
   const shuffled = [...items];
@@ -145,8 +144,8 @@ function shuffle<T>(items: T[]): T[] {
  * const shuffleNow = random.shuffler(items);
  * shuffleNow(); // shuffled copy each call
  *
- * @param items - The array of items to shuffle.
- * @returns A function that returns a newly shuffled copy of the array on each call.
+ * @param items - Source array; captured by the returned function and not mutated.
+ * @returns A zero-argument function that returns a fresh shuffled copy on each call.
  */
 function shuffler<T>(items: T[]) {
   return () => random.shuffle(items);

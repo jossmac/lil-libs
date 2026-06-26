@@ -15,16 +15,6 @@ const UNITS: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
   { unit: "minute", ms: 60 * 1000 },
   { unit: "second", ms: 1000 },
 ];
-// NOTE: cannot use the shortcut style `{dateStyle: 'short'}` because it
-// collapses the year to 2 digits when the locale is 'en-US' e.g.
-// "1/6/26" instead of "1/6/2026", which is too informal
-const DEFAULT_FORMAT: Intl.DateTimeFormatOptions = {
-  year: "numeric",
-  month: "numeric",
-  day: "numeric",
-};
-const ONE_DAY = 24 * 60 * 60 * 1000;
-const TEN_SECONDS = 10 * 1000;
 
 export type RelativeOptions = {
   /**
@@ -60,19 +50,23 @@ export type RelativeOptions = {
  * relativeTime(new Date(Date.now() - 1_000), { numeric: "auto" }); // "Just now"
  * relativeTime(new Date(Date.now() - 1_000 * 60), { style: "short" }); // "1 min. ago"
  *
- * @remarks Accepts a `Date` or ISO 8601 string. Returns relative output within 24
- * hours. With `numeric: "auto"`, values within 10 seconds return `"Just now"`.
- * Throws a `TypeError` for invalid date input.
- *
- * @param value - A `Date` object or ISO 8601 string.
- * @param relativeOptions - Relative time formatting options.
- * @param dateOptions - `Intl.DateTimeFormat` options for the date fallback.
- * @returns The formatted relative time string or date string.
+ * @param value - The date to format, as a `Date` or ISO 8601 string. Invalid values throw `TypeError`.
+ * @param relativeOptions - Options for `Intl.RelativeTimeFormat` (`numeric`, `style`). Controls phrasing (e.g. "yesterday" vs "1 day ago") and output length (e.g. "1 minute ago" vs "1 min. ago"). Defaults to `{ numeric: "always", style: "long" }`.
+ * @param dateOptions - Options for `Intl.DateTimeFormat` when the date falls outside `relativeFormatThreshold`. Defaults to numeric year, month, and day — avoiding two-digit years produced by `dateStyle: "short"` in locales such as en-US.
+ * @returns A locale-aware string: relative time when within `relativeFormatThreshold`, otherwise a formatted date from `toLocaleDateString`.
+ * @throws If the value is not a `Date` object or ISO 8601 string.
  */
 export function relativeTime(
   value: Date | string,
   relativeOptions: RelativeOptions = { numeric: "always", style: "long" },
-  dateOptions: Intl.DateTimeFormatOptions = DEFAULT_FORMAT,
+  // NOTE: default value avoids the shortcut style `{dateStyle: 'short'}`
+  // because it collapses the year to 2 digits when the locale is 'en-US' e.g.
+  // "1/6/26" instead of "1/6/2026", which is too informal.
+  dateOptions: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  },
   /** @private Used for testing. */
   __locale?: string,
 ): string {
@@ -88,11 +82,7 @@ export function relativeTime(
   const diff = timestamp - Date.now();
   const absDiff = Math.abs(diff);
 
-  if (relativeOptions.numeric === "auto" && absDiff < TEN_SECONDS) {
-    return "Just now";
-  }
-
-  if (absDiff < ONE_DAY) {
+  if (absDiff < 24 * 60 * 60 * 1000) {
     const rtf = new Intl.RelativeTimeFormat(__locale, relativeOptions);
 
     for (const { unit, ms } of UNITS) {

@@ -16,8 +16,8 @@ import type { Maybe, TupleOf } from "./types";
  *   // values: [number, ...number[]]
  * }
  *
- * @param items - The array to check.
- * @returns `true` if the array has at least one element.
+ * @param items - Array to test. `null` and `undefined` are treated as empty.
+ * @returns `true` when `items` is non-null and has at least one element; narrows the type to a non-empty tuple.
  */
 export function isPopulatedArray<T>(
   items: Maybe<T[] | readonly T[]>,
@@ -35,9 +35,9 @@ export function isPopulatedArray<T>(
  *   // values: [number, number, number]
  * }
  *
- * @param arr - The array to check.
- * @param length - The length to check for.
- * @returns `true` if the array has the given length.
+ * @param arr - Array whose length is compared.
+ * @param length - Exact length to match; when equal, narrows `arr` to a fixed-length tuple type.
+ * @returns `true` when `arr.length` equals `length` exactly.
  */
 export function isLength<T, N extends number>(
   arr: readonly T[],
@@ -54,8 +54,8 @@ export function isLength<T, N extends number>(
  * toArray(1); // [1]
  * toArray(new Set([1, 2])); // [1, 2]
  *
- * @param value - The value to convert.
- * @returns An array.
+ * @param value - Value to normalize. `null` and `undefined` become `[]`; arrays are returned as-is; iterables become `Array.from(value)`; anything else is wrapped in a one-element array.
+ * @returns An array representation of `value`.
  */
 export function toArray<T>(value: T | T[]): T[] {
   if (value == null) {
@@ -83,8 +83,8 @@ export function toArray<T>(value: T | T[]): T[] {
  * isIterable([]); // true
  * isIterable({}); // false
  *
- * @param value - The value to check.
- * @returns `true` if the value has a callable `Symbol.iterator`.
+ * @param value - Any value to test for iterable protocol support.
+ * @returns `true` when `value` is a non-null object with a callable `Symbol.iterator` (e.g. arrays, `Map`, `Set`); `false` for `null`, primitives, and plain objects.
  */
 export function isIterable<T>(value: T | Iterable<T>): value is Iterable<T>;
 export function isIterable(value: unknown): value is Iterable<unknown>;
@@ -101,16 +101,17 @@ export function isIterable(value: unknown): value is Iterable<unknown> {
 /**
  * Splits an array into chunks of the given size.
  *
- * @remarks The last chunk may be smaller than the given size if the array does not divide evenly.
+ * The last chunk may be smaller than the given size if the array does not
+ * divide evenly.
  *
  * @example
  * chunk([1, 2, 3, 4], 2); // [[1, 2], [3, 4]]
  * chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]
  * chunk([], 2); // []
  *
- * @param arr - The array to chunk.
- * @param size - The size of each chunk.
- * @returns An array of chunks.
+ * @param arr - Array to split into consecutive segments.
+ * @param size - Maximum number of elements per chunk; the final chunk may contain fewer.
+ * @returns Consecutive slices of `arr`, each up to `size` elements long. Returns `[]` when `arr` is empty.
  */
 export function chunk<T>(arr: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -122,6 +123,10 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  * Splits an array into two arrays: one with items that satisfy a predicate, and
  * one with items that do not.
  *
+ * Returns a 2-item tuple `[matched, unmatched]`. Preserves the original item
+ * order within both output arrays. Passes `(item, index, array)` to the
+ * predicate.
+ *
  * @example
  * partition([1, 2, 3, 4], (n) => n % 2 === 0);
  * // [[2, 4], [1, 3]]
@@ -129,12 +134,9 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  * partition(["a", "bb", "ccc"], (s) => s.length > 1);
  * // [["bb", "ccc"], ["a"]]
  *
- * @remarks Returns a 2-item tuple `[matched, unmatched]`. Preserves the original item
- * order within both output arrays. Passes `(item, index, array)` to the predicate.
- *
- * @param arr - The array to partition.
- * @param predicate - The function to determine which partition an item belongs to.
- * @returns A tuple of two arrays: matched items first, unmatched items second.
+ * @param arr - Array to split into two groups.
+ * @param predicate - Called as `(item, index, array)`; items for which this returns `true` go into the first group.
+ * @returns A two-element tuple `[matched, unmatched]`, preserving original order within each group.
  */
 export function partition<T>(
   arr: T[],
@@ -153,6 +155,9 @@ export function partition<T>(
  * Creates a function that returns an item from the provided array for a given
  * string, based on a stable hash of the string.
  *
+ * Returns the same key for the same input every time. Preserves literal key
+ * types (for as const arrays). Supports empty input strings.
+ *
  * @example
  * const colors = ["red", "green", "blue"] as const;
  * const getColor = createDeterministicKeySelector(colors);
@@ -161,12 +166,9 @@ export function partition<T>(
  * getColor("Barbara"); // 'green'
  * getColor("Charlie"); // 'red'
  *
- * @remarks Returns the same key for the same input every time. Preserves literal key
- * types (for `as const` arrays). Supports empty input strings. Throws if called
- * with an empty keys array.
- *
- * @param keys - The keys to use for the function.
- * @returns A function that deterministically maps a string to one of the provided keys.
+ * @param keys - Non-empty list of string keys to choose from. The same input string always maps to the same key via a stable hash.
+ * @returns A function `(value: string) => T[number]` that picks a key from `keys` deterministically.
+ * @throws If called with an empty `keys` array.
  */
 export function createDeterministicKeySelector<
   const T extends readonly string[],
