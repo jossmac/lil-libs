@@ -18,9 +18,9 @@ const UNITS: { unit: Intl.RelativeTimeFormatUnit; ms: number }[] = [
 
 export type RelativeOptions = {
   /**
-   * The format of output message.
+   * Controls whether relative time is always numeric or may use idiomatic phrasing.
    *
-   * When set to "auto", the output may use more idiomatic phrasing such as "yesterday" instead of "1 day ago".
+   * With `"auto"`, output may use forms such as `"yesterday"` or `"now"` instead of `"1 day ago"`.
    *
    * @default 'always'
    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat/RelativeTimeFormat#numeric
@@ -41,16 +41,17 @@ export type RelativeOptions = {
 };
 
 /**
- * Formats a date as relative time for nearby past or future values and falls
- * back to a date string once the value is 24 hours away or more.
+ * Formats a date as relative time when it is within `relativeFormatThreshold`
+ * of now, otherwise as a locale-aware date string.
  *
  * @example
  * relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
  * relativeTime(new Date(Date.now() + 1_000 * 60 * 5)); // "in 5 minutes"
- * relativeTime(new Date(Date.now() - 1_000), { numeric: "auto" }); // "Just now"
- * relativeTime(new Date(Date.now() - 1_000 * 60), { style: "short" }); // "1 min. ago"
+ * relativeTime(new Date(Date.now() - 1_000), undefined, { numeric: "auto" }); // e.g. "now" (locale-dependent)
+ * relativeTime(new Date(Date.now() - 1_000 * 60), undefined, { style: "short" }); // "1 min. ago"
  *
  * @param value - The date to format, as a `Date` or ISO 8601 string. Invalid values throw `TypeError`.
+ * @param relativeFormatThreshold - Maximum distance from now, in milliseconds, for relative formatting. When the date is closer than this (e.g. within 24 hours), the result is relative ("5 minutes ago"); at or beyond it, a locale date string is used instead. Defaults to 24 hours. Pass `Infinity` to always use relative formatting.
  * @param relativeOptions - Options for `Intl.RelativeTimeFormat` (`numeric`, `style`). Controls phrasing (e.g. "yesterday" vs "1 day ago") and output length (e.g. "1 minute ago" vs "1 min. ago"). Defaults to `{ numeric: "always", style: "long" }`.
  * @param dateOptions - Options for `Intl.DateTimeFormat` when the date falls outside `relativeFormatThreshold`. Defaults to numeric year, month, and day — avoiding two-digit years produced by `dateStyle: "short"` in locales such as en-US.
  * @returns A locale-aware string: relative time when within `relativeFormatThreshold`, otherwise a formatted date from `toLocaleDateString`.
@@ -58,6 +59,7 @@ export type RelativeOptions = {
  */
 export function relativeTime(
   value: Date | string,
+  relativeFormatThreshold: number = 24 * 60 * 60 * 1000,
   relativeOptions: RelativeOptions = { numeric: "always", style: "long" },
   // NOTE: default value avoids the shortcut style `{dateStyle: 'short'}`
   // because it collapses the year to 2 digits when the locale is 'en-US' e.g.
@@ -82,7 +84,7 @@ export function relativeTime(
   const diff = timestamp - Date.now();
   const absDiff = Math.abs(diff);
 
-  if (absDiff < 24 * 60 * 60 * 1000) {
+  if (absDiff < relativeFormatThreshold) {
     const rtf = new Intl.RelativeTimeFormat(__locale, relativeOptions);
 
     for (const { unit, ms } of UNITS) {
