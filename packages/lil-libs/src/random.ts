@@ -1,11 +1,13 @@
 /**
- * Namespace of random utilities.
+ * Random utilities for integers, floats, booleans, sampling, and shuffling.
  *
  * @example
  * import { random } from "@jossmac/lil-libs/random";
  *
- * random.bool(); // true or false
- * random.int(1, 3); // 1, 2, or 3
+ * random.int(1, 6); // 1–6 inclusive
+ * random.float(); // 0 <= n < 1
+ * random.choice(["a", "b", "c"]); // one element
+ * random.shuffle([1, 2, 3]); // shuffled copy
  */
 export const random = {
   bool,
@@ -25,7 +27,7 @@ export const random = {
  *
  * @example
  * random.int(1, 3); // 1, 2, or 3
- * random.int(10, 1); // still valid
+ * random.int(3, 1); // same as random.int(1, 3)
  *
  * @param min - Lower bound (inclusive); swapped with `max` when out of order.
  * @param max - Upper bound (inclusive); swapped with `min` when out of order.
@@ -43,7 +45,8 @@ function int(min: number, max: number) {
  *
  * @example
  * random.float(10, 20); // 10 <= n < 20
- * random.float(20, 10); // still valid
+ * random.float(20, 10); // same as random.float(10, 20)
+ * random.float(); // 0 <= n < 1 (default range)
  *
  * @param min - Lower bound (inclusive). Defaults to `0`; swapped with `max` when out of order.
  * @param max - Upper bound (exclusive). Defaults to `1`; swapped with `min` when out of order.
@@ -70,7 +73,7 @@ function bool() {
  * Returns one random item from an array.
  *
  * @example
- * random.choice(["a", "b", "c"]); // one item
+ * random.choice(["a", "b", "c"]); // "a", "b", or "c"
  *
  * @param items - Array to pick from.
  * @returns One uniformly random element from `items`.
@@ -80,16 +83,17 @@ function choice<T>(items: T[]) {
 }
 
 /**
- * Returns a randomly sampled subset without mutating the original array.
+ * Returns a random subset of `items` without mutating the source array.
  *
- * Defaults to `count = 1`. Returns an empty array when `count` is `0`, and all items
- * when `count` equals the array length.
+ * Defaults to `count = 1`. Returns `[]` when `count` is `0`, and all items when
+ * `count` equals the array length.
  *
  * @example
  * const items = ["a", "b", "c", "d"];
  * random.sample(items, 2); // e.g. ["d", "a"]
- * random.sample(items); // single-item sample
+ * random.sample(items); // e.g. ["b"] (default count: 1)
  * random.sample(items, 0); // []
+ * random.sample(items, items.length); // all items, shuffled
  *
  * @param items - Source array; not mutated.
  * @param count - Number of items to take after shuffling. Defaults to `1`; `0` returns `[]`, and values equal to `items.length` return all items.
@@ -116,12 +120,13 @@ function sampler<T>(items: T[], count: number = 1) {
 }
 
 /**
- * Returns a shuffled copy without mutating the original array.
+ * Returns a randomly shuffled copy of `items` without mutating the source array.
  *
  * @example
  * const items = [1, 2, 3, 4];
- * random.shuffle(items); // shuffled copy
- * items; // unchanged
+ * const shuffled = random.shuffle(items);
+ * shuffled; // e.g. [3, 1, 4, 2]
+ * items; // [1, 2, 3, 4] (unchanged)
  *
  * @param items - Array to copy and shuffle; the original is not modified.
  * @returns A Fisher–Yates shuffled copy of `items`.

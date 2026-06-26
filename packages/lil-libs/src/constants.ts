@@ -5,14 +5,14 @@
  */
 
 /**
- * Common unicode characters used to compose UI text content. Use when you need
- * explicit control over spacing and line-break behavior in UI copy.
+ * Common Unicode characters for composing UI text with explicit control over
+ * spacing and line-break behavior.
  *
  * @example
- * `${10}${UNICODE_CHARS.narrowNoBreakSpace}kg`; // "10 kg"
- * `Page${UNICODE_CHARS.noBreakSpace}1`; // stays on one line
- * `USD${UNICODE_CHARS.wordJoiner}/${UNICODE_CHARS.wordJoiner}EUR`; // keeps the token together
- * `super${UNICODE_CHARS.zeroWidthSpace}long`; // invisible optional wrap point
+ * `${10}${UNICODE_CHARS.narrowNoBreakSpace}kg`; // tight number–unit spacing, no line break
+ * `Page${UNICODE_CHARS.noBreakSpace}1`; // "Page 1" stays on one line
+ * `USD${UNICODE_CHARS.wordJoiner}/${UNICODE_CHARS.wordJoiner}EUR`; // keeps "USD/EUR" together
+ * `super${UNICODE_CHARS.zeroWidthSpace}long`; // optional wrap point, no visible space
  */
 export const UNICODE_CHARS = {
   /**
@@ -32,16 +32,15 @@ export const UNICODE_CHARS = {
    */
   noBreakSpace: "\u00A0",
   /**
-   * A non-breaking form of the zero-width space. Use when you must prevent a
-   * line break between characters without introducing any visible spacing.
+   * An invisible, zero-width character that prevents line breaks between adjacent
+   * characters without adding visible spacing.
    *
    * @see https://unicode-explorer.com/c/2060
    */
   wordJoiner: "\u2060",
   /**
-   * Intended for invisible word separation and for line-break control; it has
-   * no width. Use when you want to add optional wrap points in long unbroken
-   * text without adding visible spaces.
+   * A zero-width character that marks an optional line-break opportunity without
+   * adding visible spacing. Use to allow wrapping in long unbroken strings.
    *
    * @see https://unicode-explorer.com/c/200B
    */

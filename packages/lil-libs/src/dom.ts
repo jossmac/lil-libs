@@ -33,6 +33,7 @@ const KEYBOARD_INPUTS = new Set([
  * isKeyboardInput(textInput); // true
  * isKeyboardInput(checkbox); // false
  * isKeyboardInput(document.createElement("textarea")); // true
+ * isKeyboardInput(document.createElement("div")); // false
  *
  * @param target - Event target to test, typically from a DOM event's `target` property.
  * @returns `true` for text-like `<input>` types and `<textarea>` elements that open the software keyboard on mobile; `false` otherwise.
@@ -120,14 +121,14 @@ export function querySelectorAll(
 }
 
 /**
- * Returns a computed style value for regular CSS properties and CSS variables.
+ * Reads a computed style value from an element, including CSS custom properties.
  *
  * @example
  * const el = document.createElement("div");
  *
  * getComputedStyle(el, "color"); // e.g. "rgb(0, 0, 0)"
- * getComputedStyle(el, "line-height"); // e.g. "normal"
- * getComputedStyle(el, "--space-10"); // custom property value
+ * getComputedStyle(el, "lineHeight"); // e.g. "normal"
+ * getComputedStyle(el, "--space-10"); // "" until the custom property is set
  *
  * @param element - HTML or SVG element whose computed styles to read.
  * @param name - CSS property in camelCase (e.g. `"lineHeight"`) or a custom property (e.g. `"--space-10"`).
@@ -158,15 +159,16 @@ function isCssVarName(name: string) {
 }
 
 /**
- * Walks up the parent chain until it finds a non-empty computed style value.
+ * Walks up the DOM tree until a non-empty computed style value is found.
  *
  * @example
  * const parent = document.createElement("div");
+ * parent.style.color = "rgb(255, 0, 0)";
  * const child = document.createElement("span");
  * parent.appendChild(child);
  *
- * nearestComputedStyle(child, "color");
- * // value from child if present, otherwise nearest parent value
+ * nearestComputedStyle(child, "color"); // "rgb(255, 0, 0)" (inherited from parent)
+ * nearestComputedStyle(null, "color"); // undefined
  *
  * @param element - Starting element, or `null` to return `undefined`.
  * @param name - CSS property or custom property name (same format as {@link getComputedStyle}).
@@ -185,9 +187,10 @@ export function nearestComputedStyle(
 }
 
 /**
- * Returns `true` when the device can receive touch input.
+ * Returns whether the environment reports touch input support.
  *
- * Some devices support both touch and mouse input, such as laptops with a touchscreen.
+ * Some devices support both touch and mouse input, such as laptops with a
+ * touchscreen.
  *
  * @example
  * isTouchCapable(); // true on touch-capable devices, otherwise false
@@ -200,10 +203,12 @@ export function isTouchCapable() {
 }
 
 /**
- * Returns `true` when the primary pointer is "coarse" (for example, touch input).
+ * Returns whether the primary pointer is coarse (typically touch input).
  *
  * @example
- * isTouchDevice(); // true on coarse-pointer devices, otherwise false
+ * if (isTouchDevice()) {
+ *   // use touch-optimised interactions
+ * }
  *
  * @returns `true` when `(pointer: coarse)` matches, or when {@link isTouchCapable} succeeds as a fallback; `false` outside the browser.
  */
@@ -218,10 +223,10 @@ export function isTouchDevice() {
 }
 
 /**
- * Returns the current display mode for browser and PWA contexts.
+ * Detects the current PWA or browser display mode via `display-mode` media queries.
  *
  * Possible values: `"fullscreen"`, `"minimal-ui"`, `"picture-in-picture"`,
- * `"standalone"`, `"window-controls-overlay"`, `"browser"`.
+ * `"standalone"`, `"window-controls-overlay"`, and `"browser"`.
  *
  * @example
  * getDisplayMode();
@@ -247,10 +252,10 @@ export function getDisplayMode() {
 }
 
 /**
- * Converts object keys to HTML `data-*` attributes.
+ * Maps object properties to `data-*` attributes for DOM elements.
  *
  * CamelCase keys become kebab-case. Omits `null` and `undefined` values, and omits
- * `false` and `""` by default. Preserves `0` values. Trims the leading `is` from
+ * `false` and `""` by default. Preserves `0`. Trims a leading `is` from
  * boolean-style keys by default (only when followed by an uppercase letter).
  *
  * @example
@@ -265,6 +270,9 @@ export function getDisplayMode() {
  * //   "data-panel-index": 2,
  * //   "data-count": 0,
  * // }
+ *
+ * toDataAttributes({ isHidden: false, label: "Save" }, { omitFalsyValues: false });
+ * // { "data-hidden": false, "data-label": "Save" }
  *
  * @param props - Object whose keys become `data-*` attribute names (camelCase → kebab-case).
  * @param options - Controls omission of falsy values and trimming of `is*` prefixes from boolean-style keys.
@@ -324,22 +332,21 @@ export function toDataAttributes<T extends object>(
 }
 
 /**
- * Returns the aria-current value for a given pathname and href.
+ * Determines the appropriate `aria-current` value for a link href against the
+ * current pathname.
  *
- * Behaviour:
- * - Returns "page" for exact path matches.
- * - Returns "true" for child routes (for example /about/team under /about).
- * - Returns "false" for non-matches and null pathnames.
- * - Normalizes trailing slashes (except root) before matching.
+ * Returns `"page"` for exact matches, `"true"` for child routes (for example
+ * `/about/team` under `/about`), and `"false"` otherwise. Trailing slashes are
+ * normalized (except for root `/`).
  *
  * @see https://www.w3.org/TR/wai-aria-1.2/#aria-current
  *
  * @example
- * ariaCurrent('/about', '/about') // 'page'
- * ariaCurrent('/about/team', '/about') // 'true'
- * ariaCurrent('/contact', '/about') // 'false'
- *
- * ariaCurrent('/about-us', '/about'); // 'false' (not a child match)
+ * ariaCurrent("/about", "/about"); // "page"
+ * ariaCurrent("/about/team", "/about"); // "true"
+ * ariaCurrent("/about-us", "/about"); // "false" (prefix match, not a child route)
+ * ariaCurrent("/contact", "/about"); // "false"
+ * ariaCurrent(null, "/about"); // "false"
  *
  * @param pathname - Current route pathname to test, or `null` for `"false"`.
  * @param href - Link href to compare against; trailing slashes are normalized (except root `/`).
@@ -373,7 +380,7 @@ function normalizePath(path: string) {
 }
 
 /**
- * Joins IDs for ARIA attributes like `aria-labelledby` and `aria-describedby`.
+ * Joins element IDs into a space-separated string for ARIA reference attributes.
  *
  * Filters out falsy values (`null`, `undefined`, `false`, `""`).
  *
@@ -402,13 +409,16 @@ export function joinIds(...ids: (string | undefined | null | false)[]) {
 // Scroll ----------------------------------------------------------------------
 
 /**
- * Returns `getBoundingClientRect()` values offset by document scroll, giving
- * absolute page coordinates.
+ * Returns `getBoundingClientRect()` coordinates adjusted for page scroll position.
  *
  * @example
- * const rect = getAbsoluteClientRect(document.body);
- * rect.top;
- * rect.left;
+ * const el = document.createElement("div");
+ * document.body.appendChild(el);
+ * window.scrollTo(0, 100);
+ *
+ * const rect = getAbsoluteClientRect(el);
+ * rect.top; // viewport top + window.scrollY
+ * rect.left; // viewport left + window.scrollX
  *
  * @param el - Element to measure.
  * @returns A `DOMRect`-like object with `top`, `left`, etc. offset by `window.scrollX` / `window.scrollY` for page coordinates.
@@ -430,6 +440,9 @@ export function getAbsoluteClientRect(el: Element) {
 /**
  * Checks whether an element has horizontal overflow.
  *
+ * @example
+ * hasScrollX(el); // true when el.scrollWidth > el.clientWidth
+ *
  * @param el - Element to inspect.
  * @returns `true` when `scrollWidth` exceeds `clientWidth`.
  */
@@ -439,6 +452,9 @@ export function hasScrollX(el: Element) {
 
 /**
  * Checks whether an element has vertical overflow.
+ *
+ * @example
+ * hasScrollY(el); // true when el.scrollHeight > el.clientHeight
  *
  * @param el - Element to inspect.
  * @returns `true` when `scrollHeight` exceeds `clientHeight`.
@@ -455,6 +471,9 @@ export function hasScrollY(el: Element) {
  *
  * Uses `<= 0` rather than strict equality to account for elastic overscroll on iOS.
  *
+ * @example
+ * atScrollTop(scrollable); // true when scrollTop <= 0
+ *
  * @param el - Scrollable element to inspect.
  * @returns `true` when the element is at the top of its scroll range.
  */
@@ -466,6 +485,9 @@ export function atScrollTop(el: Element) {
  * Checks whether an element is at the bottom of its scroll range.
  *
  * Uses `>=` rather than strict equality to account for elastic overscroll on iOS.
+ *
+ * @example
+ * atScrollBottom(scrollable); // true when scrolled to the bottom edge
  *
  * @param el - Scrollable element to inspect.
  * @returns `true` when the element is at the bottom of its scroll range.
@@ -479,6 +501,9 @@ export function atScrollBottom(el: Element) {
  *
  * Uses `<= 0` rather than strict equality to account for elastic overscroll on iOS.
  *
+ * @example
+ * atScrollLeft(scrollable); // true when scrollLeft <= 0
+ *
  * @param el - Scrollable element to inspect.
  * @returns `true` when the element is at the left edge of its scroll range.
  */
@@ -490,6 +515,9 @@ export function atScrollLeft(el: Element) {
  * Checks whether an element is at the right edge of its scroll range.
  *
  * Uses `>=` rather than strict equality to account for elastic overscroll on iOS.
+ *
+ * @example
+ * atScrollRight(scrollable); // true when scrolled to the right edge
  *
  * @param el - Scrollable element to inspect.
  * @returns `true` when the element is at the right edge of its scroll range.

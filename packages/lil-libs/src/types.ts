@@ -54,7 +54,7 @@ export type Prettify<T> = {
  * @example
  * type Input = { id: string | null; age?: number | undefined };
  * type Output = NonNullableValues<Input>;
- * //   ^? { id: string; age?: number }
+ * //   ^? { id: string; age: number }
  */
 export type NonNullableValues<T> = {
   [P in keyof T]-?: Exclude<T[P], null | undefined>;
@@ -117,6 +117,8 @@ export type TupleOf<
  * //   ^? string
  * type B = Widen<42>;
  * //   ^? number
+ * type C = Widen<true>;
+ * //   ^? boolean
  */
 export type Widen<T> = T extends string
   ? string

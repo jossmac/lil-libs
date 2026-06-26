@@ -15,6 +15,7 @@ export const UNKNOWN_ERROR_MESSAGE = "An unknown error occurred.";
  *
  * @example
  * isError(new Error("boom")); // true
+ * isError({ message: "boom" }); // false
  * isError("boom"); // false
  *
  * @param value - Unknown value to test.
@@ -28,6 +29,7 @@ export function isError(value: unknown): value is Error {
  * Guard for error-like objects exposing a string `message` property.
  *
  * @example
+ * isErrorLike(new Error("boom")); // true
  * isErrorLike({ message: "boom" }); // true
  * isErrorLike({ message: 123 }); // false
  *
@@ -41,11 +43,11 @@ export function isErrorLike(
 }
 
 /**
- * Returns a human-readable error message from unknown input.
+ * Extracts a human-readable error message from unknown thrown input.
  *
- * For native `Error` values, uses `error.message`. For error-like objects with a
- * string `message`, uses `value.message`. String inputs are returned as-is. All other
- * values receive the fallback message.
+ * Native `Error` instances and error-like objects with a string `message` use
+ * that message. String inputs are returned as-is. Everything else receives the
+ * fallback message.
  *
  * @example
  * parseError(new Error("Boom")); // "Boom"
@@ -70,16 +72,18 @@ export function parseError(
 }
 
 /**
- * Returns an `Error` instance from unknown thrown input.
+ * Normalizes unknown thrown input into an `Error` instance.
  *
- * Returns the input unchanged when it is already an `Error`. Wraps strings in a new
- * `Error`. For error-like objects, copies `message` and preserves `name`/`stack` when
- * present.
+ * Returns the input unchanged when it is already an `Error`. Wraps strings in a
+ * new `Error` (empty strings use the fallback message). For error-like objects,
+ * copies `message` and preserves `name`/`stack` when present.
  *
  * @example
  * ensureError(new Error("boom")); // same Error instance
  * ensureError("boom"); // Error("boom")
- * ensureError({ message: "boom", name: "CustomError" }); // Error with copied metadata
+ * ensureError(""); // Error("An unknown error occurred.")
+ * ensureError({ message: "boom", name: "CustomError" }); // Error with copied name
+ * ensureError(404); // Error('Error: 404')
  *
  * @param error - Unknown thrown value from a `catch` block or Promise rejection.
  * @returns The same `Error` when already an instance; a new `Error` for strings and error-like objects (copying `name`/`stack` when present); a serialized fallback for other values.

@@ -21,15 +21,15 @@ export function isString(value: unknown): value is string {
 }
 
 /**
- * Check if a string contains another string, ignoring diacritic marks and case.
+ * Checks whether a string contains another, ignoring diacritics and case.
  *
- * Uses `Intl.Collator` for accent-insensitive, case-insensitive matching. Returns
- * `true` for an empty substring.
+ * Uses `Intl.Collator` for accent- and case-insensitive matching. An empty
+ * `substring` always matches.
  *
  * @example
  * contains("café", "cafe"); // true
  * contains("Hello World", "world"); // true
- * contains("hello", ""); // true
+ * contains("hello", ""); // true (empty needle always matches)
  * contains("hello", "bye"); // false
  *
  * @param string - Haystack to search within (normalized to NFC before comparison).
@@ -67,16 +67,16 @@ export function contains(string: string, substring: string, locale = "en") {
 }
 
 /**
- * Returns the count and appropriate plural or singular form of a term.
+ * Formats a count with the appropriate singular or plural term.
  *
  * @example
- * pluralize(0, 'wallet'); // '0 wallets'
- * pluralize(1, 'wallet'); // '1 wallet'
- * pluralize(2, 'wallet'); // '2 wallets'
- * pluralize(1, ['person', 'people']); // '1 person'
- * pluralize(2, ['person', 'people']); // '2 people'
- * pluralize(1, ['person', 'people'], false); // 'person'
- * pluralize(2, ['person', 'people'], false); // 'people'
+ * pluralize(0, "wallet"); // "0 wallets"
+ * pluralize(1, "wallet"); // "1 wallet"
+ * pluralize(2, "wallet"); // "2 wallets"
+ * pluralize(2, "address"); // "2 addresses" (auto-pluralises trailing "s")
+ * pluralize(1, ["person", "people"]); // "1 person"
+ * pluralize(2, ["person", "people"]); // "2 people"
+ * pluralize(2, ["person", "people"], false); // "people" (count omitted)
  *
  * @param count - Quantity used to pick singular (`1`) vs plural (any other number, including `0`).
  * @param terms - Singular string, or `[singular, plural]` tuple; bare strings get a simple English plural (`wallet` → `wallets`).
@@ -113,17 +113,15 @@ function commonEnglishPlural(term: string): [singular: string, plural: string] {
 }
 
 /**
- * Encodes a string to base64, optionally creating a data URI.
+ * Encodes a UTF-8 string to base64, optionally as a `data:` URI.
  *
- * Supports Unicode input. Optimises SVG payload whitespace when `mimeType` is
+ * Supports Unicode input. Minifies SVG whitespace when `mimeType` is
  * `"image/svg+xml"`.
  *
  * @example
- * base64Encode("hello");
- * // "aGVsbG8="
- *
- * base64Encode("hello", "text/plain");
- * // "data:text/plain;base64,aGVsbG8="
+ * base64Encode("hello"); // "aGVsbG8="
+ * base64Encode("hello", "text/plain"); // "data:text/plain;base64,aGVsbG8="
+ * base64Encode("<svg> </svg>", "image/svg+xml"); // SVG whitespace minified before encoding
  *
  * @param value - UTF-8 string to encode.
  * @param mimeType - When provided, wraps the payload in a `data:${mimeType};base64,...` URI; SVG payloads are whitespace-minified first.
@@ -215,32 +213,33 @@ type MimeType = KnownMimeType | (string & {});
 /** Options for {@link formatInitials}. */
 export type InitialsOptions = {
   /**
-   * The maximum number of letters to return.
+   * Maximum number of graphemes to include in the result.
    * @default 2
    */
   maxLetters?: number;
   /**
-   * The locale to use for the initials.
+   * Locale for grapheme segmentation and uppercasing.
    * @default undefined (system locale)
    */
   locale?: string;
 };
 
 /**
- * Returns initials for names with Unicode-aware grapheme support.
+ * Builds initials from a name using Unicode-aware grapheme segmentation.
  *
- * Defaults to `maxLetters = 2`. Returns `"?"` for empty or whitespace-only input.
- * Throws when `maxLetters` is not finite or is less than `1`.
+ * Defaults to `maxLetters = 2`. Returns `"?"` for empty or whitespace-only
+ * input. Throws when `maxLetters` is not finite or is less than `1`.
  *
  * @example
  * formatInitials("John Doe"); // "JD"
- * formatInitials("John Henry Doe"); // "JD"
+ * formatInitials("John Henry Doe"); // "JD" (first + last word when maxLetters is 2)
  * formatInitials("John Henry Doe", { maxLetters: 3 }); // "JHD"
  * formatInitials("John Ronald Reuel Tolkien"); // "JT"
  * formatInitials("John Ronald Reuel Tolkien", { maxLetters: 3 }); // "JRR"
  * formatInitials("Élodie Durand"); // "ÉD"
  * formatInitials("ilker", { locale: "tr" }); // "İL"
  * formatInitials("李小龍"); // "李小"
+ * formatInitials(""); // "?"
  *
  * @param name - Full name or phrase to abbreviate; punctuation is stripped and whitespace collapsed.
  * @param options - `maxLetters` (default `2`) and optional `locale` for grapheme segmentation and casing.
@@ -319,12 +318,10 @@ function alphanumeric(value: string) {
     .trim();
 }
 
-/**
- * Options for case conversion functions.
- */
+/** Shared options for {@link camelCase}, {@link kebabCase}, and related case helpers. */
 export type CaseOptions = {
   /**
-   * The locale to use for character case conversions.
+   * Locale passed to `toLocaleLowerCase` / `toLocaleUpperCase`.
    * @default undefined (system locale)
    */
   locale?: string;
@@ -483,13 +480,14 @@ const MINOR_WORDS = new Set([
 ]);
 
 /**
- * Converts a string to Title Case, capitalizing all major words
- * but keeping articles, prepositions, and conjunctions in lowercase
- * unless they are the first or last word.
+ * Converts a string to title case, capitalizing content words while keeping
+ * articles, prepositions, and conjunctions lowercase unless they are the
+ * first or last word.
  *
  * @example
- * titleCase('a comparison of cases'); // 'A Comparison of Cases'
- * titleCase('the wind in the willows'); // 'The Wind in the Willows'
+ * titleCase("a comparison of cases"); // "A Comparison of Cases"
+ * titleCase("the wind in the willows"); // "The Wind in the Willows"
+ * titleCase("lost in translation"); // "Lost in Translation" ("in" stays lowercase)
  *
  * @param value - Input split on case transitions, whitespace, and punctuation.
  * @param options - Optional `locale` for case mapping (defaults to system locale).

@@ -53,7 +53,7 @@ export function isDefined<T>(value: T | null | undefined): value is T {
 }
 
 /**
- * Returns a value directly or by invoking a unary function.
+ * Resolves a literal value or invokes a unary callback.
  *
  * @example
  * resolveMaybeFn(42); // 42
@@ -70,14 +70,13 @@ export function resolveMaybeFn<V, A>(value: V | ((arg: A) => V), arg?: A): V {
 }
 
 /**
- * Returns a lazily computed value that is cached after first access. Access the
- * result via `.value`.
+ * Creates a lazily evaluated, memoized value accessed via `.value`.
  *
  * @example
  * const settings = lazy(() => loadSettings());
  *
- * settings.value; // computes once
- * settings.value; // cached
+ * settings.value; // loadSettings() runs once
+ * settings.value; // returns cached result
  *
  * @param factory - Zero-argument function called on first access to `.value`.
  * @returns A {@link Lazy} handle whose `.value` is computed once on first read and cached thereafter.

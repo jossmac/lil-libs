@@ -5,7 +5,7 @@
  */
 
 /**
- * Asserts that a value is present (or that a boolean is `true`). Narrows types
+ * Asserts that a value is present or that a boolean is `true`, narrowing types
  * after the assertion.
  *
  * @example
@@ -15,6 +15,9 @@
  * assert(maybeName, "Name is required");
  * const name = maybeName;
  * //    ^? string
+ *
+ * assert(0); // passes (only null, undefined, and false throw)
+ * assert(false); // throws
  *
  * @param value - Value to assert. For booleans, must be `true`; for other types, must not be `null` or `undefined`. Other falsy values such as `0` and `""` pass.
  * @param message - Optional error message when the assertion fails. Defaults to `"Assertion failed"`.

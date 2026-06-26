@@ -47,8 +47,11 @@ export type RelativeOptions = {
  * @example
  * relativeTime(new Date(Date.now() - 1_000 * 60)); // "1 minute ago"
  * relativeTime(new Date(Date.now() + 1_000 * 60 * 5)); // "in 5 minutes"
- * relativeTime(new Date(Date.now() - 1_000), undefined, { numeric: "auto" }); // e.g. "now" (locale-dependent)
+ * relativeTime("2026-01-06T12:00:00.000Z"); // accepts ISO 8601 strings
+ * relativeTime(new Date(Date.now() - 1_000), undefined, { numeric: "auto" }); // locale-dependent phrasing
  * relativeTime(new Date(Date.now() - 1_000 * 60), undefined, { style: "short" }); // "1 min. ago"
+ * relativeTime(new Date(Date.now() - 1_000 * 60 * 60 * 48)); // locale date string (beyond default 24h threshold)
+ * relativeTime(new Date(Date.now() - 1_000 * 60 * 60 * 24 * 365), Infinity); // always relative
  *
  * @param value - The date to format, as a `Date` or ISO 8601 string. Invalid values throw `TypeError`.
  * @param relativeFormatThreshold - Maximum distance from now, in milliseconds, for relative formatting. When the date is closer than this (e.g. within 24 hours), the result is relative ("5 minutes ago"); at or beyond it, a locale date string is used instead. Defaults to 24 hours. Pass `Infinity` to always use relative formatting.

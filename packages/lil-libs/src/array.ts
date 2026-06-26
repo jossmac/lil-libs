@@ -15,6 +15,8 @@ import type { Maybe, TupleOf } from "./types";
  * if (isPopulatedArray(values)) {
  *   // values: [number, ...number[]]
  * }
+ * isPopulatedArray([]); // false
+ * isPopulatedArray(null); // false
  *
  * @param items - Array to test. `null` and `undefined` are treated as empty.
  * @returns `true` when `items` is non-null and has at least one element; narrows the type to a non-empty tuple.
@@ -26,14 +28,14 @@ export function isPopulatedArray<T>(
 }
 
 /**
- * Checks if an array has a specific length, narrowing the type to a tuple of
- * the given length.
+ * Checks whether an array has an exact length, narrowing the type to a fixed-length tuple.
  *
  * @example
  * const values: number[] = [1, 2, 3];
  * if (isLength(values, 3)) {
  *   // values: [number, number, number]
  * }
+ * isLength(values, 2); // false
  *
  * @param arr - Array whose length is compared.
  * @param length - Exact length to match; when equal, narrows `arr` to a fixed-length tuple type.
@@ -47,10 +49,12 @@ export function isLength<T, N extends number>(
 }
 
 /**
- * Converts a value to `Array`, if it is not already.
+ * Normalizes a value into an array.
  *
  * @example
  * toArray(null); // []
+ * toArray(undefined); // []
+ * toArray([1, 2]); // [1, 2] (same array instance)
  * toArray(1); // [1]
  * toArray(new Set([1, 2])); // [1, 2]
  *
@@ -81,6 +85,7 @@ export function toArray<T>(value: T | T[]): T[] {
  * isIterable(new Map()); // true
  * isIterable(new Set()); // true
  * isIterable([]); // true
+ * isIterable(null); // false
  * isIterable({}); // false
  *
  * @param value - Any value to test for iterable protocol support.
@@ -99,14 +104,14 @@ export function isIterable(value: unknown): value is Iterable<unknown> {
 }
 
 /**
- * Splits an array into chunks of the given size.
+ * Splits an array into consecutive chunks of at most `size` elements.
  *
- * The last chunk may be smaller than the given size if the array does not
- * divide evenly.
+ * The final chunk may be smaller when the array length is not evenly divisible.
  *
  * @example
  * chunk([1, 2, 3, 4], 2); // [[1, 2], [3, 4]]
  * chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]
+ * chunk([1, 2, 3], 10); // [[1, 2, 3]] (size larger than array)
  * chunk([], 2); // []
  *
  * @param arr - Array to split into consecutive segments.
@@ -120,16 +125,15 @@ export function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 /**
- * Splits an array into two arrays: one with items that satisfy a predicate, and
- * one with items that do not.
+ * Partitions an array into matched and unmatched groups by predicate result.
  *
- * Returns a 2-item tuple `[matched, unmatched]`. Preserves the original item
- * order within both output arrays. Passes `(item, index, array)` to the
- * predicate.
+ * Returns `[matched, unmatched]` as a two-element tuple. Preserves original item
+ * order within each group. The predicate receives `(item, index, array)`.
  *
  * @example
- * partition([1, 2, 3, 4], (n) => n % 2 === 0);
- * // [[2, 4], [1, 3]]
+ * const [evens, odds] = partition([1, 2, 3, 4], (n) => n % 2 === 0);
+ * evens; // [2, 4]
+ * odds; // [1, 3]
  *
  * partition(["a", "bb", "ccc"], (s) => s.length > 1);
  * // [["bb", "ccc"], ["a"]]
@@ -152,19 +156,20 @@ export function partition<T>(
 }
 
 /**
- * Creates a function that returns an item from the provided array for a given
- * string, based on a stable hash of the string.
+ * Creates a function that maps each input string to a key from `keys` using a
+ * stable hash, so the same input always selects the same key.
  *
- * Returns the same key for the same input every time. Preserves literal key
- * types (for as const arrays). Supports empty input strings.
+ * Preserves literal key types (for `as const` arrays). Empty input strings are
+ * supported.
  *
  * @example
  * const colors = ["red", "green", "blue"] as const;
  * const getColor = createDeterministicKeySelector(colors);
  *
- * getColor("Albert"); // 'blue'
- * getColor("Barbara"); // 'green'
- * getColor("Charlie"); // 'red'
+ * getColor("Albert"); // "blue"
+ * getColor("Barbara"); // "green"
+ * getColor("Charlie"); // "red"
+ * getColor("Albert"); // "blue" (stable across calls)
  *
  * @param keys - Non-empty list of string keys to choose from. The same input string always maps to the same key via a stable hash.
  * @returns A function `(value: string) => T[number]` that picks a key from `keys` deterministically.

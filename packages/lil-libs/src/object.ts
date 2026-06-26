@@ -32,11 +32,15 @@ export function isPlainObject(value: unknown): value is UnknownRecord {
 }
 
 /**
- * Namespace-like wrapper around the typed object helpers.
+ * Grouped export of typed alternatives to `Object.keys`, `Object.entries`, and
+ * `Object.fromEntries`.
  *
  * @example
  * const keys = TObject.keys({ foo: 1, bar: "hello" });
  * //    ^? ("foo" | "bar")[]
+ *
+ * const entries = TObject.entries({ foo: 1, bar: "hello" });
+ * const rebuilt = TObject.fromEntries(entries);
  */
 export const TObject = {
   keys: typedKeys,

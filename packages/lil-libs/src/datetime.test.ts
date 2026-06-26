@@ -43,34 +43,44 @@ describe("lil-libs/datetime", () => {
     describe("relative time formatting", () => {
       it("supports the `numeric` option", () => {
         expect(
-          relativeTime(new Date(Date.now() - 1000), { numeric: "auto" }),
-        ).toBe("Just now");
+          relativeTime(new Date(Date.now() - 1000), undefined, {
+            numeric: "auto",
+          }),
+        ).toBe("1 second ago");
         expect(
-          relativeTime(new Date(Date.now() - 1000 * 60), { numeric: "auto" }),
+          relativeTime(new Date(Date.now() - 1000 * 60), undefined, {
+            numeric: "auto",
+          }),
         ).toBe("1 minute ago");
       });
       it("supports the `style` option", () => {
         expect(
-          relativeTime(new Date(Date.now() - 1000 * 60), { style: "long" }),
+          relativeTime(new Date(Date.now() - 1000 * 60), undefined, {
+            style: "long",
+          }),
         ).toBe("1 minute ago");
         expect(
-          relativeTime(new Date(Date.now() - 1000 * 60), { style: "short" }),
+          relativeTime(new Date(Date.now() - 1000 * 60), undefined, {
+            style: "short",
+          }),
         ).toBe("1 min. ago");
         expect(
-          relativeTime(new Date(Date.now() - 1000 * 60), { style: "narrow" }),
+          relativeTime(new Date(Date.now() - 1000 * 60), undefined, {
+            style: "narrow",
+          }),
         ).toBe("1m ago");
       });
     });
 
     describe("date formatting", () => {
       it("supports date formatting options", () => {
-        const args = [new Date(Date.now() - 1000 * 60 * 60 * 24), {}] as const;
+        const value = new Date(Date.now() - 1000 * 60 * 60 * 24);
 
-        expect(relativeTime(...args, { dateStyle: "medium" })).toBe(
-          "Jan 6, 2026",
-        );
         expect(
-          relativeTime(...args, {
+          relativeTime(value, undefined, undefined, { dateStyle: "medium" }),
+        ).toBe("Jan 6, 2026");
+        expect(
+          relativeTime(value, undefined, undefined, {
             year: "numeric",
             month: "long",
             day: "numeric",
@@ -79,15 +89,17 @@ describe("lil-libs/datetime", () => {
         ).toBe("Tuesday, January 6, 2026");
       });
       it("behaves according to the locale", () => {
-        const args = [
-          new Date(Date.now() - 1000 * 60 * 60 * 24),
-          {},
-          {},
-        ] as const;
+        const value = new Date(Date.now() - 1000 * 60 * 60 * 24);
 
-        expect(relativeTime(...args, "en-AU")).toBe("06/01/2026");
-        expect(relativeTime(...args, "ja-JP")).toBe("2026/1/6");
-        expect(relativeTime(...args, "ko-KR")).toBe("2026. 1. 6.");
+        expect(relativeTime(value, undefined, undefined, {}, "en-AU")).toBe(
+          "06/01/2026",
+        );
+        expect(relativeTime(value, undefined, undefined, {}, "ja-JP")).toBe(
+          "2026/1/6",
+        );
+        expect(relativeTime(value, undefined, undefined, {}, "ko-KR")).toBe(
+          "2026. 1. 6.",
+        );
       });
     });
   });
