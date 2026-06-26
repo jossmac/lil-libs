@@ -13,9 +13,6 @@ body > footer {
   flex-direction: column;
   gap: 8px;
 }
-.tsd-signature {
-  border-radius: 6%;
-}
 .tsd-page-navigation ul {
   padding-inline-start: 1.3rem;
 }
