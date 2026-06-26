@@ -53,12 +53,12 @@ export type RelativeOptions = {
  * relativeTime(new Date(Date.now() - 1_000 * 60 * 60 * 48)); // locale date string (beyond default 24h threshold)
  * relativeTime(new Date(Date.now() - 1_000 * 60 * 60 * 24 * 365), Infinity); // always relative
  *
- * @param value - The date to format, as a `Date` or ISO 8601 string. Invalid values throw `TypeError`.
+ * @param value - The date to format, as a `Date` or ISO 8601 string.
  * @param relativeFormatThreshold - Maximum distance from now, in milliseconds, for relative formatting. When the date is closer than this (e.g. within 24 hours), the result is relative ("5 minutes ago"); at or beyond it, a locale date string is used instead. Defaults to 24 hours. Pass `Infinity` to always use relative formatting.
  * @param relativeOptions - Options for `Intl.RelativeTimeFormat` (`numeric`, `style`). Controls phrasing (e.g. "yesterday" vs "1 day ago") and output length (e.g. "1 minute ago" vs "1 min. ago"). Defaults to `{ numeric: "always", style: "long" }`.
  * @param dateOptions - Options for `Intl.DateTimeFormat` when the date falls outside `relativeFormatThreshold`. Defaults to numeric year, month, and day — avoiding two-digit years produced by `dateStyle: "short"` in locales such as en-US.
  * @returns A locale-aware string: relative time when within `relativeFormatThreshold`, otherwise a formatted date from `toLocaleDateString`.
- * @throws If the value is not a `Date` object or ISO 8601 string.
+ * @throws {TypeError} If the value is not a `Date` object or ISO 8601 string.
  */
 export function relativeTime(
   value: Date | string,

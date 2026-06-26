@@ -1,4 +1,4 @@
-# @jossmac/lil-libs
+# Lil’ Libs
 
 A small collection of TypeScript-first utilities for everyday application code. Each module is focused, composable, and ships with zero runtime dependencies.
 
@@ -13,9 +13,8 @@ pnpm add @jossmac/lil-libs
 Import only what you need via subpath exports:
 
 ```ts
-import { assert, ensure } from "@jossmac/lil-libs/assert";
+import { chunk, partition } from "@jossmac/lil-libs/array";
 import { clamp, lerp } from "@jossmac/lil-libs/number";
-import { isString, pluralize } from "@jossmac/lil-libs/string";
 import type { Maybe, Prettify } from "@jossmac/lil-libs/types";
 ```
 

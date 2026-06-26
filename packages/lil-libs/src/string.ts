@@ -244,7 +244,7 @@ export type InitialsOptions = {
  * @param name - Full name or phrase to abbreviate; punctuation is stripped and whitespace collapsed.
  * @param options - `maxLetters` (default `2`) and optional `locale` for grapheme segmentation and casing.
  * @returns Uppercased initials via `Intl.Segmenter` when available; `"?"` for empty input after cleaning.
- * @throws When `maxLetters` is not finite or is less than `1`.
+ * @throws {TypeError} When `maxLetters` is not finite or is less than `1`.
  */
 export function formatInitials(name: string, options: InitialsOptions = {}) {
   const { maxLetters = 2, locale } = options;
