@@ -79,6 +79,15 @@ export function toArray<T>(value: T | T[]): T[] {
 }
 
 /**
+ * Checks whether a value implements the iterable protocol, preserving the
+ * element type when the input is already typed as `Iterable<T>`.
+ *
+ * @param value - Value or iterable to test.
+ * @returns Type predicate narrowing `value` to `Iterable<T>`.
+ */
+export function isIterable<T>(value: T | Iterable<T>): value is Iterable<T>;
+
+/**
  * Checks whether a value implements the iterable protocol.
  *
  * @example
@@ -91,8 +100,8 @@ export function toArray<T>(value: T | T[]): T[] {
  * @param value - Any value to test for iterable protocol support.
  * @returns `true` when `value` is a non-null object with a callable `Symbol.iterator` (e.g. arrays, `Map`, `Set`); `false` for `null`, primitives, and plain objects.
  */
-export function isIterable<T>(value: T | Iterable<T>): value is Iterable<T>;
 export function isIterable(value: unknown): value is Iterable<unknown>;
+
 export function isIterable(value: unknown): value is Iterable<unknown> {
   return (
     value != null &&

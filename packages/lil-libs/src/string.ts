@@ -113,25 +113,39 @@ function commonEnglishPlural(term: string): [singular: string, plural: string] {
 }
 
 /**
- * Encodes a UTF-8 string to base64, optionally as a `data:` URI.
+ * Encodes a UTF-8 string to raw base64 text. Supports Unicode input.
  *
- * Supports Unicode input. Minifies SVG whitespace when `mimeType` is
- * `"image/svg+xml"`.
+ * Uses the fastest available method:
+ * 1. `Buffer` (Node.js)
+ * 2. `Uint8Array.toBase64` (modern browsers)
+ * 3. `TextEncoder` + `btoa` (legacy fallback)
  *
  * @example
  * base64Encode("hello"); // "aGVsbG8="
+ *
+ * @param value - UTF-8 string to encode.
+ * @returns Base64 representation of `value`.
+ */
+export function base64Encode(value: string): string;
+
+/**
+ * Encodes a UTF-8 string as a `data:` URI with the given MIME type.
+ *
+ * Minifies SVG whitespace when `mimeType` is `"image/svg+xml"`.
+ *
+ * @example
  * base64Encode("hello", "text/plain"); // "data:text/plain;base64,aGVsbG8="
  * base64Encode("<svg> </svg>", "image/svg+xml"); // SVG whitespace minified before encoding
  *
  * @param value - UTF-8 string to encode.
- * @param mimeType - When provided, wraps the payload in a `data:${mimeType};base64,...` URI; SVG payloads are whitespace-minified first.
- * @returns Raw base64 text, or a data URI when `mimeType` is set.
+ * @param mimeType - MIME type for the resulting data URI; SVG payloads are whitespace-minified first.
+ * @returns A `data:${mimeType};base64,...` URI.
  */
-export function base64Encode(value: string): string;
 export function base64Encode<M extends MimeType>(
   value: string,
   mimeType: M,
 ): `data:${M};base64,${string}`;
+
 export function base64Encode(value: string, mimeType?: MimeType) {
   let content = value;
 

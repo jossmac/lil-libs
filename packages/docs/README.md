@@ -12,14 +12,6 @@ pnpm docs:dev      # watch + live reload
 pnpm docs:preview  # serve the last build
 ```
 
-> [!NOTE]
-> When running `docs:dev` udpate `typedoc.json`:
->
-> ```json
-> "entryPoints": ["../lil-libs/src"],
-> "entryPointStrategy": "expand",
-> ```
-
 From this package:
 
 ```bash

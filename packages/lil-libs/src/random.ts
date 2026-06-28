@@ -75,7 +75,7 @@ export function randomChoice<T>(items: T[]) {
  *
  * @param items - Source array; not mutated.
  * @param count - Number of items to take after shuffling. Defaults to `1`; `0` returns `[]`, and values equal to `items.length` return all items.
- * @returns A new array of up to `count` items in random order (via {@link shuffle}).
+ * @returns A new array of up to `count` items in random order (via {@link randomShuffle}).
  */
 export function randomSample<T>(items: T[], count: number = 1) {
   return randomShuffle(items).slice(0, count);
@@ -90,7 +90,7 @@ export function randomSample<T>(items: T[], count: number = 1) {
  * sampleTwo(); // random 2-item sample each call
  *
  * @param items - Source array; captured by the returned function and not mutated.
- * @param count - Sample size passed to {@link sample} on each call. Defaults to `1`.
+ * @param count - Sample size passed to {@link randomSample} on each call. Defaults to `1`.
  * @returns A zero-argument function that returns a fresh random sample each time it is called.
  */
 export function randomSampler<T>(items: T[], count: number = 1) {

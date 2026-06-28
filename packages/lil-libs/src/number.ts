@@ -5,6 +5,7 @@
  */
 
 import { isPopulatedArray } from "./array";
+import { assert } from "./assert";
 
 /**
  * Runtime guard for JavaScript numbers, excluding `NaN`.
@@ -122,8 +123,6 @@ export function roundToPrecision(
 /**
  * Rounds a number to the nearest step interval.
  *
- * Throws for `step = 0` or non-finite step values like `Infinity` and `NaN`.
- *
  * @example
  * roundToStep(5.26, 0.25); // 5.25
  * roundToStep(-5.26, 0.25); // -5.25
@@ -131,11 +130,11 @@ export function roundToPrecision(
  * @param value - Number to round.
  * @param step - Interval to snap to; must be finite and non-zero.
  * @returns The nearest multiple of `step` to `value`.
- * @throws When `step` is `0`, `NaN`, or non-finite.
+ * @throws When `step` is `0`, or fails the {@link isFiniteNumber} guard.
  */
 export function roundToStep(value: number, step: number): number {
-  if (step === 0) throw new Error("The `step` cannot be zero.");
-  if (!isFinite(step)) throw new Error("The `step` cannot be infinite.");
+  assert(step !== 0, "The `step` cannot be zero.");
+  assert(isFiniteNumber(step), "The `step` cannot be infinite.");
   return Math.round(value / step) * step;
 }
 
@@ -144,13 +143,11 @@ export function roundToStep(value: number, step: number): number {
  *
  * Bias options: `"first"` / `"last"` keep the earlier or later tied candidate;
  * `"smaller"` / `"larger"` prefer the numerically smaller or larger tied value.
- * Throws if `items` is empty.
  *
  * @example
- * const items = [1, 3, 5, 7, 9];
- *
- * findNearest(4, items); // 3 (default bias: "first")
- * findNearest(4, items, "last"); // 5
+ * const items = [9, 7, 5, 3, 1];
+ * findNearest(4, items); // 5 (default bias: "first")
+ * findNearest(4, items, "last"); // 3
  * findNearest(4, items, "smaller"); // 3
  * findNearest(4, items, "larger"); // 5
  *
@@ -158,7 +155,7 @@ export function roundToStep(value: number, step: number): number {
  * @param items - Non-empty list of candidates; order matters for tie-breaking.
  * @param bias - Which candidate wins when distances are equal. Defaults to `"first"`.
  * @returns The item in `items` closest to `value`, using `bias` to break ties.
- * @throws When `items` is empty.
+ * @throws When `items` is empty (via {@link isPopulatedArray}).
  */
 // This is O(n) but it's not like we're computing arrays with millions of items,
 // it'll be fine. Intentional design decision to avoid sorting items, which
@@ -168,9 +165,7 @@ export function findNearest(
   items: number[],
   bias: "first" | "last" | "smaller" | "larger" = "first",
 ): number {
-  if (!isPopulatedArray(items)) {
-    throw new Error("Items must not be empty.");
-  }
+  assert(isPopulatedArray(items), "Items must not be empty.");
 
   const [first, ...rest] = items;
   let best = first;
@@ -211,8 +206,7 @@ export function findNearest(
  * Builds an inclusive numeric array from `start` to `end`.
  *
  * Accepts negative `step` values (the absolute step size is used). Decimal
- * precision is derived from `step`. Throws for `step = 0` or non-finite step
- * values.
+ * precision is derived from `step`.
  *
  * @example
  * sequence(1, 5); // [1, 2, 3, 4, 5]
@@ -223,15 +217,15 @@ export function findNearest(
  * @param end - Last value in the sequence (inclusive).
  * @param step - Absolute increment between values; sign is ignored. Defaults to `1`.
  * @returns An ascending or descending array from `start` to `end`, rounded to the precision implied by `step`.
- * @throws When `step` is `0`, `NaN`, or non-finite.
+ * @throws When `step` is `0`, or fails the {@link isFiniteNumber} guard.
  */
 export function sequence(
   start: number,
   end: number,
   step: number = 1,
 ): number[] {
-  if (step === 0) throw new Error("The `step` cannot be zero.");
-  if (!isFinite(step)) throw new Error("The `step` cannot be infinite.");
+  assert(step !== 0, "The `step` cannot be zero.");
+  assert(isFiniteNumber(step), "The `step` cannot be infinite.");
 
   const precision = Math.max(0, (step.toString().split(".")[1] ?? "").length);
   const result: number[] = [];

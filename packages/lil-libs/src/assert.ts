@@ -5,8 +5,22 @@
  */
 
 /**
- * Asserts that a value is present or that a boolean is `true`, narrowing types
- * after the assertion.
+ * Asserts that a boolean is `true`, narrowing the type after the assertion.
+ *
+ * @example
+ * assert(isReady); // passes when `isReady` is true
+ * assert(false); // throws
+ *
+ * @param value - Boolean that must be `true`.
+ * @param message - Optional error message when the assertion fails. Defaults to `"Assertion failed"`.
+ * @throws If `value` is `false`.
+ */
+export function assert(value: boolean, message?: string): asserts value;
+
+/**
+ * Asserts that a value is present, narrowing away `null` and `undefined`.
+ *
+ * Other falsy values such as `0` and `""` pass.
  *
  * @example
  * function getName(id: number): string | undefined;
@@ -16,18 +30,17 @@
  * const name = maybeName;
  * //    ^? string
  *
- * assert(0); // passes (only null, undefined, and false throw)
- * assert(false); // throws
+ * assert(0); // passes
  *
- * @param value - Value to assert. For booleans, must be `true`; for other types, must not be `null` or `undefined`. Other falsy values such as `0` and `""` pass.
+ * @param value - Value that must not be `null` or `undefined`.
  * @param message - Optional error message when the assertion fails. Defaults to `"Assertion failed"`.
- * @throws If `value` is `false`, `null`, or `undefined`. Does not throw for other falsy values like `0` and `""`.
+ * @throws If `value` is `null` or `undefined`.
  */
-export function assert(value: boolean, message?: string): asserts value;
 export function assert<T>(
   value: T | null | undefined,
   message?: string,
 ): asserts value is T;
+
 export function assert(value: unknown, message?: string) {
   if (value === false || value === null || typeof value === "undefined") {
     throw new Error(message || "Assertion failed");
