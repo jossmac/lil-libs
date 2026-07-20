@@ -1,3 +1,6 @@
+import { assert } from "./assert";
+import { clamp, lerp } from "./number";
+
 /**
  * Generates random integers in an inclusive range.
  *
@@ -132,4 +135,80 @@ export function randomShuffle<T>(items: T[]): T[] {
  */
 export function randomShuffler<T>(items: T[]) {
   return () => randomShuffle(items);
+}
+
+export type RandomBiasedOptions = {
+  /**
+   * Where the peak of the curve sits within the range `[min, max]`.
+   * @default 0.5
+   */
+  peak?: number;
+
+  /**
+   * How wide the curve is, as a fraction of the total range `[min, max]`.
+   * Lower values create a sharper peak; higher values flatten the curve.
+   * @default 0.2
+   */
+  spread?: number;
+};
+/**
+ * Generates a random number within a range, following a normal (Gaussian) curve.
+ *
+ * @example
+ * // Default: Bell curve centered at 50.
+ * // ~68% of results fall between 30 and 70 (50 ± 20).
+ * randomBiased(0, 100);
+ *
+ * @example
+ * // Shifted: Bell curve centered at 80.
+ * randomBiased(0, 100, { peak: 0.8 });
+ *
+ * @example
+ * // Tight spread: Bell curve sharply clustered around 50.
+ * // ~68% of results fall between 45 and 55 (50 ± 5).
+ * randomBiased(0, 100, { spread: 0.05 });
+ *
+ * @param min - Lower bound (inclusive).
+ * @param max - Upper bound (inclusive).
+ * @param options - Options for the distribution.
+ *
+ * @returns A random float in `[min, max]` biased toward the `peak`.
+ */
+export function randomBiased(
+  min: number,
+  max: number,
+  options: RandomBiasedOptions = {},
+): number {
+  if (min > max) [min, max] = [max, min];
+
+  const { peak = 0.5, spread = 0.2 } = options;
+
+  assert(spread > 0 && spread < 1, "`spread` must be between (0, 1)");
+  assert(peak >= 0 && peak <= 1, "`peak` must be between [0, 1]");
+
+  const bias = lerp(min, max, peak);
+  const deviation = (max - min) * spread;
+  const z = boxMullerTransform();
+
+  return clamp(bias + z * deviation, min, max);
+}
+
+/**
+ * Box-Muller transform to generate a standard normal distribution from two
+ * uniform random numbers.
+ *
+ * @returns `0..(1-ε)`
+ *
+ * @see https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+ */
+function boxMullerTransform(): number {
+  let u = 0;
+  let v = 0;
+
+  // Math.random() is inclusive of 0. We need 0 excluded to avoid Math.log(0)
+  // which is -Infinity.
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }

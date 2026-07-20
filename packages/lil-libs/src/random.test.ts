@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  randomBiased,
   randomBoolean,
   randomChoice,
   randomFloat,
@@ -12,6 +13,94 @@ import {
 } from "./random";
 
 describe("lil-libs/random", () => {
+  describe("randomBiased", () => {
+    it("returns a number within the specified range", () => {
+      const result = randomBiased(0, 100);
+      expect(result).toBeGreaterThanOrEqual(0);
+      expect(result).toBeLessThanOrEqual(100);
+      expect(typeof result).toBe("number");
+    });
+
+    it("stays within range over many calls", () => {
+      for (let i = 0; i < 200; i++) {
+        const result = randomBiased(10, 20);
+        expect(result).toBeGreaterThanOrEqual(10);
+        expect(result).toBeLessThanOrEqual(20);
+      }
+    });
+
+    it("returns min when min equals max", () => {
+      expect(randomBiased(5, 5)).toBe(5);
+    });
+
+    it("works with negative ranges", () => {
+      const result = randomBiased(-50, -10);
+      expect(result).toBeGreaterThanOrEqual(-50);
+      expect(result).toBeLessThanOrEqual(-10);
+    });
+
+    it("works with fractional boundaries", () => {
+      const result = randomBiased(1.5, 2.5);
+      expect(result).toBeGreaterThanOrEqual(1.5);
+      expect(result).toBeLessThanOrEqual(2.5);
+    });
+
+    it("biases toward the default peak (middle of the range)", () => {
+      const samples: number[] = [];
+      for (let i = 0; i < 500; i++) {
+        samples.push(randomBiased(0, 100));
+      }
+      const mean = samples.reduce((sum, n) => sum + n, 0) / samples.length;
+      // With peak=0.5, the mean should land near the middle
+      expect(mean).toBeGreaterThan(35);
+      expect(mean).toBeLessThan(65);
+    });
+
+    it("biases toward a custom peak near the lower bound", () => {
+      const samples: number[] = [];
+      for (let i = 0; i < 500; i++) {
+        samples.push(randomBiased(0, 100, { peak: 0 }));
+      }
+      const mean = samples.reduce((sum, n) => sum + n, 0) / samples.length;
+      expect(mean).toBeLessThan(30);
+    });
+
+    it("biases toward a custom peak near the upper bound", () => {
+      const samples: number[] = [];
+      for (let i = 0; i < 500; i++) {
+        samples.push(randomBiased(0, 100, { peak: 1 }));
+      }
+      const mean = samples.reduce((sum, n) => sum + n, 0) / samples.length;
+      expect(mean).toBeGreaterThan(70);
+    });
+
+    it("clusters more tightly with a smaller spread", () => {
+      const tight: number[] = [];
+      const wide: number[] = [];
+      for (let i = 0; i < 500; i++) {
+        tight.push(randomBiased(0, 100, { spread: 0.05 }));
+        wide.push(randomBiased(0, 100, { spread: 0.4 }));
+      }
+      const variance = (values: number[]) => {
+        const mean = values.reduce((sum, n) => sum + n, 0) / values.length;
+        return (
+          values.reduce((sum, n) => sum + (n - mean) ** 2, 0) / values.length
+        );
+      };
+      expect(variance(tight)).toBeLessThan(variance(wide));
+    });
+
+    it("throws when spread is out of range", () => {
+      expect(() => randomBiased(0, 10, { spread: 0 })).toThrow(/spread/);
+      expect(() => randomBiased(0, 10, { spread: 1 })).toThrow(/spread/);
+      expect(() => randomBiased(0, 10, { spread: -0.1 })).toThrow(/spread/);
+    });
+
+    it("throws when peak is out of range", () => {
+      expect(() => randomBiased(0, 10, { peak: -0.1 })).toThrow(/peak/);
+      expect(() => randomBiased(0, 10, { peak: 1.1 })).toThrow(/peak/);
+    });
+  });
   describe("randomBoolean", () => {
     it("returns a boolean value", () => {
       const result = randomBoolean();

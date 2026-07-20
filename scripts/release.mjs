@@ -87,7 +87,13 @@ function ensureCleanGitTree() {
 function bumpPackageVersion(releaseType) {
   run(
     "npm",
-    ["version", releaseType, "--no-git-tag-version", "--prefix", LIB_PACKAGE_PREFIX],
+    [
+      "version",
+      releaseType,
+      "--no-git-tag-version",
+      "--prefix",
+      LIB_PACKAGE_PREFIX,
+    ],
     { cwd: REPO_ROOT },
   );
 }
