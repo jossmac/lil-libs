@@ -154,19 +154,19 @@ export type RandomBiasedOptions = {
 /**
  * Generates a random number within a range, following a normal (Gaussian) curve.
  *
- * @example
+ * @examples
+ * ```ts
  * // Default: Bell curve centered at 50.
  * // ~68% of results fall between 30 and 70 (50 ± 20).
  * randomBiased(0, 100);
  *
- * @example
  * // Shifted: Bell curve centered at 80.
  * randomBiased(0, 100, { peak: 0.8 });
  *
- * @example
  * // Tight spread: Bell curve sharply clustered around 50.
  * // ~68% of results fall between 45 and 55 (50 ± 5).
  * randomBiased(0, 100, { spread: 0.05 });
+ * ```
  *
  * @param min - Lower bound (inclusive).
  * @param max - Upper bound (inclusive).
