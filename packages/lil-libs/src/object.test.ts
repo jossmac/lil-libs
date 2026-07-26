@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  hasKey,
   isPlainObject,
   populatedKeys,
   typedEntries,
@@ -28,6 +29,61 @@ describe("lil-libs/object", () => {
       expect(isPlainObject(new Set())).toBe(false);
       expect(isPlainObject(/test/)).toBe(false);
       expect(isPlainObject(new Example())).toBe(false);
+    });
+  });
+
+  describe("hasKey", () => {
+    it("should return true for own properties", () => {
+      const symbolKey = Symbol("symbolKey");
+      const obj = { foo: 1, 2: "two", [symbolKey]: true };
+
+      expect(hasKey(obj, "foo")).toBe(true);
+      expect(hasKey(obj, 2)).toBe(true);
+      expect(hasKey(obj, symbolKey)).toBe(true);
+    });
+
+    it("should return true for own properties of null-prototype objects", () => {
+      const obj: Record<string, unknown> = Object.create(null);
+      obj.foo = 1;
+
+      expect(hasKey(obj, "foo")).toBe(true);
+    });
+
+    it("should return false for absent keys", () => {
+      expect(hasKey({}, "foo")).toBe(false);
+      expect(hasKey({ foo: 1 }, "bar")).toBe(false);
+      expect(hasKey({ foo: 1 }, Symbol("bar"))).toBe(false);
+    });
+
+    it("should return false for inherited properties", () => {
+      class Example {
+        method() {}
+      }
+
+      expect(hasKey({}, "toString")).toBe(false);
+      expect(hasKey(new Example(), "method")).toBe(false);
+    });
+
+    it("should return true for own properties explicitly set to undefined", () => {
+      expect(hasKey({ foo: undefined }, "foo")).toBe(true);
+    });
+
+    it("should match `Object.hasOwn` runtime behavior exactly", () => {
+      const obj = { foo: 1, bar: "hello", baz: true };
+
+      for (const key of ["foo", "bar", "baz", "qux", "toString"]) {
+        expect(hasKey(obj, key)).toBe(Object.hasOwn(obj, key));
+      }
+    });
+
+    it("should narrow an unknown key to a key of the object", () => {
+      const obj = { foo: 1, bar: "hello" };
+      const key = "foo" as string;
+
+      if (hasKey(obj, key)) {
+        expectTypeOf(key).toEqualTypeOf<"foo" | "bar">();
+        expectTypeOf(obj[key]).toEqualTypeOf<number | string>();
+      }
     });
   });
 

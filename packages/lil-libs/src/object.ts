@@ -32,6 +32,29 @@ export function isPlainObject(value: unknown): value is UnknownRecord {
 }
 
 /**
+ * Narrows an unknown key to a known key of the object.
+ *
+ * @example
+ * const obj = { foo: 1, bar: "hello" };
+ * declare const key: string;
+ *
+ * if (hasKey(obj, key)) {
+ *   obj[key];
+ *   //  ^? number | string
+ * }
+ *
+ * @param object - Object whose own properties to check.
+ * @param key - Unknown key to test.
+ * @returns `true` when `key` is an own property of `object`, narrowing it to `keyof T`; `false` for inherited or absent keys.
+ */
+export function hasKey<T extends object>(
+  object: T,
+  key: PropertyKey,
+): key is keyof T {
+  return Object.hasOwn(object, key);
+}
+
+/**
  * Grouped export of typed alternatives to `Object.keys`, `Object.entries`, and
  * `Object.fromEntries`.
  *
