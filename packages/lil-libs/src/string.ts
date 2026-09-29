@@ -74,6 +74,8 @@ export function contains(string: string, substring: string, locale = "en") {
  * pluralize(1, "wallet"); // "1 wallet"
  * pluralize(2, "wallet"); // "2 wallets"
  * pluralize(2, "address"); // "2 addresses" (auto-pluralises trailing "s")
+ * pluralize(2, "city"); // "2 cities" (consonant + "y" → "ies")
+ * pluralize(2, "key"); // "2 keys" (vowel + "y" → "ys")
  * pluralize(1, ["person", "people"]); // "1 person"
  * pluralize(2, ["person", "people"]); // "2 people"
  * pluralize(2, ["person", "people"], false); // "people" (count omitted)
@@ -102,14 +104,29 @@ export function pluralize(
 
 /**
  * Don't make consumers provide both terms for common English plural cases,
- * e.g. wallet → wallets, address → addresses
+ * e.g. wallet → wallets, address → addresses, city → cities, key → keys
  */
 function commonEnglishPlural(term: string): [singular: string, plural: string] {
   if (term.endsWith("s")) {
     return [term, `${term}es`];
   }
 
+  // Consonant + Y: City → Cities, Story → Stories
+  // Vowel + Y: Key  → Keys, Day  → Days
+  if (isConsonantY(term)) {
+    return [term, `${term.slice(0, -1)}ies`];
+  }
+
   return [term, `${term}s`];
+}
+
+function isConsonantY(term: string): boolean {
+  if (term.length < 2) return false;
+  if (!term.endsWith("y")) return false;
+
+  const vowels = "aeiou";
+  const penultimate = term[term.length - 2]!;
+  return !vowels.includes(penultimate);
 }
 
 /**

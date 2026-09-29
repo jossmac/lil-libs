@@ -188,6 +188,12 @@ describe("lil-libs/string", () => {
       expect(pluralize(0, "address")).toBe("0 addresses");
       expect(pluralize(1, "address")).toBe("1 address");
       expect(pluralize(2, "address")).toBe("2 addresses");
+      expect(pluralize(0, "city")).toBe("0 cities");
+      expect(pluralize(1, "city")).toBe("1 city");
+      expect(pluralize(2, "city")).toBe("2 cities");
+      expect(pluralize(0, "key")).toBe("0 keys");
+      expect(pluralize(1, "key")).toBe("1 key");
+      expect(pluralize(2, "key")).toBe("2 keys");
     });
     it("supports a tuple, with singular and plural terms", () => {
       expect(pluralize(0, ["person", "people"])).toBe("0 people");
