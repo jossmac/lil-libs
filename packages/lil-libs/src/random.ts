@@ -58,9 +58,12 @@ export function randomBoolean() {
  *
  * @param items - Array to pick from.
  * @returns One uniformly random element from `items`.
+ * @throws When `items` is empty.
  */
-export function randomChoice<T>(items: T[]) {
-  return items[randomInteger(0, items.length - 1)];
+export function randomChoice<T>(items: T[]): T {
+  assert(items.length > 0, "Items must not be empty.");
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- index is in range for non-empty arrays
+  return items[randomInteger(0, items.length - 1)]!;
 }
 
 /**

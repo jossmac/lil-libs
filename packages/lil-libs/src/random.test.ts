@@ -146,6 +146,9 @@ describe("lil-libs/random", () => {
       expect(results.size).toBe(3);
       expect(Array.from(results).sort()).toEqual(["a", "b", "c"]);
     });
+    it("throws when the array is empty", () => {
+      expect(() => randomChoice([])).toThrow(/empty/);
+    });
   });
   describe("randomFloat", () => {
     it("returns a float within default range [0, 1)", () => {
