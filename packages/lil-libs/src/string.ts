@@ -121,12 +121,12 @@ function commonEnglishPlural(term: string): [singular: string, plural: string] {
 }
 
 function isConsonantY(term: string): boolean {
-  if (term.length < 2) return false;
   if (!term.endsWith("y")) return false;
 
-  const vowels = "aeiou";
-  const penultimate = term[term.length - 2]!;
-  return !vowels.includes(penultimate);
+  const penultimate = term.at(-2);
+  if (penultimate === undefined) return false;
+
+  return !"aeiou".includes(penultimate);
 }
 
 /**
