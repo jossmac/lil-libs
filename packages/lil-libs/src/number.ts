@@ -105,46 +105,84 @@ export function clamp(value: number, min: number, max: number): number {
 /**
  * Rounds a number to a fixed number of decimal places.
  *
- * When `digits <= 0`, rounds to the nearest integer. The `base` parameter
- * defaults to `10`; most callers should leave it unchanged.
+ * Rounds by the decimal value as written, so `1.005` rounds to `1.01` even
+ * though its binary representation is slightly below `1.005`. Halfway values
+ * round away from zero. When `digits <= 0`, rounds to the nearest integer. The
+ * `base` parameter defaults to `10`; most callers should leave it unchanged.
  *
  * @example
  * roundToPrecision(3.14159, 2); // 3.14
- * roundToPrecision(3.005, 2); // 3.01
+ * roundToPrecision(1.005, 2); // 1.01
+ * roundToPrecision(-2.5, 0); // -3
  * roundToPrecision(3.7, 0); // 4
  *
  * @param value - Number to round.
- * @param digits - Fractional digits to keep; values `<= 0` delegate to `Math.round`.
+ * @param digits - Fractional digits to keep; values `<= 0` round to the nearest integer.
  * @param base - Radix used for scaling (default `10`); most callers should leave this unchanged.
- * @returns `value` rounded to `digits` decimal places at the given `base`.
+ * @returns `value` rounded to `digits` decimal places at the given `base`; values that already fit within `digits` are returned unchanged.
  */
 export function roundToPrecision(
   value: number,
   digits: number,
   base: number = 10,
 ): number {
-  if (digits <= 0) return Math.round(value);
-  const pow = Math.pow(base, digits);
-  return Math.round(value * pow) / pow;
+  if (digits <= 0) {
+    return symmetricRound(value);
+  }
+
+  if (base !== 10) {
+    const pow = Math.pow(base, digits);
+    return symmetricRound(value * pow) / pow;
+  }
+
+  if (countDecimals(value) <= digits) {
+    return value;
+  }
+
+  return shiftDecimal(symmetricRound(shiftDecimal(value, digits)), -digits);
 }
 
 /**
  * Rounds a number to the nearest step interval.
  *
+ * Works on the decimal values as written, so results are free of floating-point
+ * noise and halfway values are detected exactly. Halfway values round away from
+ * zero.
+ *
  * @example
  * roundToStep(5.26, 0.25); // 5.25
  * roundToStep(-5.26, 0.25); // -5.25
+ * roundToStep(0.35, 0.1); // 0.4
  *
  * @param value - Number to round.
- * @param step - Interval to snap to; must be finite and non-zero.
- * @returns The nearest multiple of `step` to `value`.
+ * @param step - Interval to snap to; must be finite and non-zero. The sign is ignored.
+ * @returns The nearest multiple of `step` to `value`, at the decimal precision of `step`. Values too large to be affected by `step` are returned unchanged.
  * @throws When `step` is `0`, or fails the {@link isFiniteNumber} guard.
  */
 export function roundToStep(value: number, step: number): number {
   assert(step !== 0, "The `step` cannot be zero.");
   assert(isFiniteNumber(step), "The `step` cannot be infinite.");
-  return Math.round(value / step) * step;
+
+  const digits = countDecimals(step);
+  const scaledStep = shiftDecimal(Math.abs(step), digits);
+
+  if (scaledStep >= MAX_EXACT_SCALED) {
+    const rounded = symmetricRound(value / step) * step;
+    // `toFixed` only accepts 0..100 digits
+    return Number(rounded.toFixed(Math.min(digits, 100)));
+  }
+
+  const quotient = shiftDecimal(value, digits) / scaledStep;
+  // already a whole number of steps at float resolution (or not finite)
+  if (!(Math.abs(quotient) < 2 ** 52)) return value;
+
+  return shiftDecimal(symmetricRound(quotient) * scaledStep, -digits);
 }
+
+// Integers below this have at most 15 significant digits, which survive a
+// round-trip through decimal strings; longer ones are likely computed floats
+// (e.g. `1 / 3`) rather than decimal literals.
+const MAX_EXACT_SCALED = 1e15;
 
 /**
  * Returns the closest value in `items`, with configurable tie-breaking.
@@ -181,11 +219,16 @@ export function findNearest(
 
   for (const item of rest) {
     const diff = Math.abs(item - value);
+    // distances within a few rounding errors of each other are ties, e.g. 0.3
+    // is 0.09999999999999998 from 0.2 but 0.10000000000000003 from 0.4
+    const scale = Math.max(Math.abs(value), Math.abs(item), Math.abs(best));
+    const tolerance = Number.isFinite(scale) ? 4 * Number.EPSILON * scale : 0;
+    const isTie = diff === bestDiff || Math.abs(diff - bestDiff) <= tolerance;
 
-    if (diff < bestDiff) {
+    if (!isTie && diff < bestDiff) {
       best = item;
       bestDiff = diff;
-    } else if (diff === bestDiff) {
+    } else if (isTie) {
       switch (bias) {
         case "first":
           // keep existing best
@@ -214,18 +257,19 @@ export function findNearest(
  * Builds an inclusive numeric array from `start` to `end`.
  *
  * Accepts negative `step` values (the absolute step size is used). Decimal
- * precision is derived from `step`.
+ * precision is derived from `start` and `step`.
  *
  * @example
  * sequence(1, 5); // [1, 2, 3, 4, 5]
  * sequence(5, 1); // [5, 4, 3, 2, 1]
  * sequence(0, 1, 0.33); // [0, 0.33, 0.66, 0.99]
+ * sequence(0, 0.3, 0.1); // [0, 0.1, 0.2, 0.3]
  *
  * @param start - First value in the sequence (inclusive).
  * @param end - Last value in the sequence (inclusive).
  * @param step - Absolute increment between values; sign is ignored. Defaults to `1`.
- * @returns An ascending or descending array from `start` to `end`, rounded to the precision implied by `step`.
- * @throws When `step` is `0`, or fails the {@link isFiniteNumber} guard.
+ * @returns An ascending or descending array from `start` to `end`, rounded to the precision implied by `start` and `step`.
+ * @throws When `step` is `0`, or when `step`, `start` or `end` fails the {@link isFiniteNumber} guard.
  */
 export function sequence(
   start: number,
@@ -234,25 +278,38 @@ export function sequence(
 ): number[] {
   assert(step !== 0, "The `step` cannot be zero.");
   assert(isFiniteNumber(step), "The `step` cannot be infinite.");
+  assert(
+    isFiniteNumber(start) && isFiniteNumber(end),
+    "The `start` and `end` must be finite.",
+  );
 
-  const precision = Math.max(0, (step.toString().split(".")[1] ?? "").length);
-  const result: number[] = [];
-  let current = start;
   step = Math.abs(step);
+  const direction = start <= end ? 1 : -1;
+  const digits = Math.max(
+    countDecimals(start),
+    countDecimals(end),
+    countDecimals(step),
+  );
+  const scaledStart = shiftDecimal(start, digits);
+  const scaledEnd = shiftDecimal(end, digits);
+  const scaledStep = shiftDecimal(step, digits);
 
-  if (start < end) {
-    while (current <= end) {
-      result.push(roundToPrecision(current, precision));
-      current += step;
-    }
-  } else {
-    while (current >= end) {
-      result.push(roundToPrecision(current, precision));
-      current -= step;
-    }
+  const isExact = [scaledStart, scaledEnd, scaledStep].every(
+    (n) => Math.abs(n) < MAX_EXACT_SCALED,
+  );
+
+  if (isExact) {
+    const count =
+      Math.floor(Math.abs(scaledEnd - scaledStart) / scaledStep) + 1;
+    return Array.from({ length: count }, (_, i) =>
+      shiftDecimal(scaledStart + direction * i * scaledStep, -digits),
+    );
   }
 
-  return result;
+  const steps = Number((Math.abs(end - start) / step).toPrecision(15));
+  return Array.from({ length: Math.floor(steps) + 1 }, (_, i) =>
+    roundToPrecision(start + direction * i * step, digits),
+  );
 }
 
 /**
@@ -265,7 +322,7 @@ export function sequence(
  * @param from - Value at interpolation factor `0`.
  * @param to - Value at interpolation factor `1`.
  * @param value - Interpolation factor; typically in `0..1` but not clamped.
- * @returns `from + (to - from) * value`.
+ * @returns `from * (1 - value) + to * value`, which is exact at `value` `0` and `1`.
  */
 export function lerp(from: number, to: number, value: number) {
   return from * (1 - value) + to * value;
@@ -333,4 +390,42 @@ export function remap(
   const t = options.clamp !== false ? clamp(tRaw, 0, 1) : tRaw;
 
   return lerp(outputRange[0], outputRange[1], t);
+}
+
+// Helpers ---------------------------------------------------------------------
+
+/** Counts the decimal places of a number, including exponent notation (e.g. `1e-7`). */
+function countDecimals(value: number): number {
+  const [mantissa, exponent] = splitDecimal(value);
+  const fractionLength = mantissa.split(".")[1]?.length ?? 0;
+  return Math.max(0, fractionLength - Number(exponent));
+}
+
+/**
+ * Moves the decimal point of a number by `places` (positive is right, negative
+ * is left), using its string form so `shiftDecimal(1.005, 2)` is exactly `100.5`.
+ */
+function shiftDecimal(value: number, places: number): number {
+  const [mantissa, exponent] = splitDecimal(value);
+  return Number(`${mantissa}e${Number(exponent) + places}`);
+}
+
+/** Like `Math.round`, but negative halves round away from zero (`-2.5` → `-3`). */
+function symmetricRound(value: number): number {
+  return Math.sign(value) * Math.round(Math.abs(value));
+}
+
+/**
+ * Splits a number into its mantissa and exponent components.
+ *
+ * @example
+ * splitDecimal(1.23); // ["1.23", "0"]
+ * splitDecimal(1.23e-4); // ["1.23", "-4"]
+ *
+ * @param value - Number to split.
+ * @returns A tuple of the mantissa and exponent, as strings.
+ */
+function splitDecimal(value: number): [string, string] {
+  const [mantissa = "", exponent = "0"] = value.toString().split("e");
+  return [mantissa, exponent];
 }

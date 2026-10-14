@@ -152,6 +152,23 @@ describe("lil-libs/number", () => {
     it("handles large decimal places", () => {
       expect(roundToPrecision(3.14159, 10)).toBe(3.14159);
     });
+
+    it("rounds decimal halfway values that are inexact in binary", () => {
+      expect(roundToPrecision(1.005, 2)).toBe(1.01);
+      expect(roundToPrecision(1.255, 2)).toBe(1.26);
+      expect(roundToPrecision(8.345, 2)).toBe(8.35);
+    });
+
+    it("rounds negative halfway values away from zero", () => {
+      expect(roundToPrecision(-2.5, 0)).toBe(-3);
+      expect(roundToPrecision(-1.005, 2)).toBe(-1.01);
+      expect(roundToPrecision(2.5, 0)).toBe(3);
+    });
+
+    it("does not overflow for large values or digits", () => {
+      expect(roundToPrecision(1e300, 10)).toBe(1e300);
+      expect(roundToPrecision(1.5, 400)).toBe(1.5);
+    });
   });
 
   describe("roundToStep", () => {
@@ -159,6 +176,45 @@ describe("lil-libs/number", () => {
       expect(roundToStep(5.1, 0.5)).toBe(5);
       expect(roundToStep(5.26, 0.25)).toBe(5.25);
       expect(roundToStep(-5.26, 0.25)).toBe(-5.25);
+    });
+
+    it("does not return floating-point noise", () => {
+      expect(roundToStep(0.3, 0.1)).toBe(0.3);
+      expect(roundToStep(0.7, 0.1)).toBe(0.7);
+      expect(roundToStep(-0.3, 0.1)).toBe(-0.3);
+      expect(roundToStep(0.29, 0.01)).toBe(0.29);
+      expect(roundToStep(1.23, 0.01)).toBe(1.23);
+      expect(roundToStep(0.36, 0.12)).toBe(0.36);
+    });
+
+    it("handles steps in exponent notation", () => {
+      expect(roundToStep(3e-7, 1e-7)).toBe(3e-7);
+      expect(roundToStep(4.6e-7, 1.5e-7)).toBe(4.5e-7);
+      expect(roundToStep(1.2e21, 1e21)).toBe(1e21);
+    });
+
+    it("handles integer and negative steps", () => {
+      expect(roundToStep(17, 5)).toBe(15);
+      expect(roundToStep(18, 5)).toBe(20);
+      expect(roundToStep(0.3, -0.1)).toBe(0.3);
+    });
+
+    it("rounds exact halfway values away from zero", () => {
+      expect(roundToStep(0.35, 0.1)).toBe(0.4);
+      expect(roundToStep(1.15, 0.1)).toBe(1.2);
+      expect(roundToStep(-0.35, 0.1)).toBe(-0.4);
+      expect(roundToStep(-2.5, 1)).toBe(-3);
+      expect(roundToStep(0.375, 0.25)).toBe(0.5);
+    });
+
+    it("does not overflow for large values", () => {
+      expect(roundToStep(1e300, 1e-10)).toBe(1e300);
+    });
+
+    it("handles steps that are not decimal literals", () => {
+      expect(roundToStep(1, 1 / 3)).toBe(1);
+      expect(roundToStep(0.4, 1 / 3)).toBe(1 / 3);
+      expect(roundToStep(0.6, 1 / 3)).toBe(2 / 3);
     });
 
     it("throws when step is zero or non-finite", () => {
@@ -300,6 +356,17 @@ describe("lil-libs/number", () => {
         expect(findNearest(2.5, items, "smaller")).toBe(2);
         expect(findNearest(2.5, items, "larger")).toBe(3);
       });
+
+      it("treats distances differing only by floating-point noise as ties", () => {
+        expect(findNearest(0.3, [0.2, 0.4], "first")).toBe(0.2);
+        expect(findNearest(0.3, [0.2, 0.4], "last")).toBe(0.4);
+        expect(findNearest(0.3, [0.2, 0.4], "larger")).toBe(0.4);
+        expect(findNearest(0.3, [0.4, 0.2], "smaller")).toBe(0.2);
+      });
+
+      it("does not treat genuinely different tiny distances as ties", () => {
+        expect(findNearest(0, [1e-16, 2e-16], "last")).toBe(1e-16);
+      });
     });
 
     it("handles edge case with identical consecutive values", () => {
@@ -342,6 +409,33 @@ describe("lil-libs/number", () => {
       expect(() => sequence(0, 1, 0)).toThrow();
       expect(() => sequence(0, 1, Infinity)).toThrow();
       expect(() => sequence(0, 1, NaN)).toThrow();
+    });
+
+    it("includes the end value despite floating-point drift", () => {
+      expect(sequence(0, 0.3, 0.1)).toEqual([0, 0.1, 0.2, 0.3]);
+      expect(sequence(0.3, 0, 0.1)).toEqual([0.3, 0.2, 0.1, 0]);
+      expect(sequence(0, 0.6, 0.2)).toEqual([0, 0.2, 0.4, 0.6]);
+    });
+
+    it("keeps the precision of start", () => {
+      expect(sequence(0.05, 0.35, 0.1)).toEqual([0.05, 0.15, 0.25, 0.35]);
+    });
+
+    it("handles steps in exponent notation", () => {
+      expect(sequence(0, 3e-7, 1e-7)).toEqual([0, 1e-7, 2e-7, 3e-7]);
+    });
+
+    it("handles steps that are not decimal literals", () => {
+      expect(sequence(0, 1, 1 / 3)).toEqual([0, 1 / 3, 2 / 3, 1]);
+    });
+
+    it("throws on non-finite start or end", () => {
+      const message = "The `start` and `end` must be finite.";
+      expect(() => sequence(NaN, 1)).toThrow(message);
+      expect(() => sequence(0, NaN)).toThrow(message);
+      expect(() => sequence(Infinity, 1)).toThrow(message);
+      expect(() => sequence(0, Infinity)).toThrow(message);
+      expect(() => sequence(0, -Infinity)).toThrow(message);
     });
   });
 
